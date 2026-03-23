@@ -11,10 +11,10 @@ Vineal Sunkara & Christina Zhang, Princeton University
 
 ```bash
 # From your local machine:
-scp -r spline_fields/ vss54@amarel.rutgers.edu:~/spline_fields/
+scp -r spline_fields/ <netid>@amarel.rutgers.edu:~/spline_fields/
 
 # SSH in:
-ssh vss54@amarel.rutgers.edu
+ssh <netid>@amarel.rutgers.edu
 ```
 
 ### 1. Get a GPU node (interactive)
@@ -25,22 +25,14 @@ srun --partition=gpu --gres=gpu:1 --mem=32G --time=02:00:00 --cpus-per-task=4 --
 
 ### 2. Set up environment (ONCE)
 
-**BEFORE RUNNING:** Edit `scripts/find_conda.sh` and `scripts/setup_env.sh`
-to set `MINICONDA_DIR` to your actual miniconda path. Currently set to:
-`$HOME/NeuralRenderingECE576/Assignment1/nrad_assignment/miniconda3`
-
 ```bash
 cd ~/spline_fields
 bash scripts/setup_env.sh
 ```
 
-This will auto-detect your CUDA version, create the `spline_fields` conda env,
-install PyTorch + PyTorch3D, and verify everything works.
-
 ### 3. RUN THIS FIRST — Gradient Check
 
 ```bash
-source scripts/find_conda.sh
 conda activate spline_fields
 cd ~/spline_fields
 mkdir -p logs outputs
@@ -53,8 +45,6 @@ python step0_gradient_check.py
 - The best rendering radius for your setup
 - Whether optimization actually reduces loss
 
-**WRITE DOWN THE RECOMMENDED RADIUS.** You'll use it in every subsequent command.
-
 **If anything fails, STOP HERE and debug.** Common issues:
 - PyTorch3D not built for your CUDA version → rebuild with matching CUDA
 - Gradient norm is 0 → radius is too small, increase it
@@ -63,14 +53,14 @@ python step0_gradient_check.py
 ### 4. Generate synthetic dataset
 
 ```bash
-python dataset.py --radius <YOUR_BEST_RADIUS> --output-dir outputs/dataset
+python dataset.py --output-dir outputs/dataset
 ```
 
 ### 5. Run single-view optimization
 
 ```bash
 python optimize.py \
-    --radius <YOUR_BEST_RADIUS> \
+    --radius 0.02 \
     --num-steps 500 \
     --lr 1e-3 \
     --output-dir outputs/single_view
@@ -80,15 +70,13 @@ python optimize.py \
 
 ```bash
 python optimize_sequential.py \
-    --radius <YOUR_BEST_RADIUS> \
+    --radius 0.02 \
     --num-views 36 \
     --steps-per-view 50 \
     --output-dir outputs/sequential
 ```
 
 ### 7. (Alternative) Submit as batch jobs
-
-Edit `RADIUS=0.02` in `scripts/run_pipeline.slurm` with your best radius, then:
 
 ```bash
 mkdir -p logs
@@ -120,10 +108,9 @@ spline_fields/
 ├── optimize.py                # Single-view optimization
 ├── optimize_sequential.py     # Multi-view persistent memory loop
 ├── scripts/
-│   ├── find_conda.sh          # Shared conda-finding logic (edit MINICONDA_DIR here)
 │   ├── setup_env.sh           # One-shot conda setup
-│   ├── setup.slurm            # SLURM: gradient check
-│   └── run_pipeline.slurm     # SLURM: full pipeline (edit RADIUS here)
+│   ├── setup.slurm            # SLURM: environment test
+│   └── run_pipeline.slurm     # SLURM: full pipeline
 ├── outputs/                   # All results go here
 │   ├── dataset/               # GT control points + rendered images
 │   ├── single_view/           # Single-view optimization results
@@ -182,14 +169,9 @@ The key plot is `outputs/sequential/sequential_optimization.png` showing:
 → Reduce image size: `--image-size 128`, or reduce curves/samples.
 
 **PyTorch3D build fails**
-→ This is the most common issue on HPC. Try in order:
-  1. Make sure you're on a GPU node (not login node) when building.
-  2. Try the prebuilt wheel instead of source:
-     `pip install pytorch3d -f https://dl.fbaipublicfiles.com/pytorch3d/packaging/wheels/py310_cu121_pyt241/download.html`
-  3. Check CUDA version alignment: `nvidia-smi` shows driver CUDA, `nvcc --version`
-     shows toolkit CUDA. They must be compatible.
-  4. If all else fails, install `fvcore` and `iopath` first, then retry:
-     `pip install fvcore iopath && pip install "git+https://github.com/facebookresearch/pytorch3d.git"`
+→ Check CUDA version alignment: `nvidia-smi` shows driver CUDA, `nvcc --version`
+   shows toolkit CUDA. They must be compatible. On Amarel, try:
+   `module load cuda/12.1` before building.
 
 **Sequential drift increases**
 → Learning rate too high (overshooting). Try `--lr 1e-4`.
