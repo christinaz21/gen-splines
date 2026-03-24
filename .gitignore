@@ -1,4 +1,6 @@
 initialApproach/
 outputs/oldOutputs/
 __pycache__/
-
+outputs/gen_conv/
+outputs/gen_percurve/
+outputs/training_data/
