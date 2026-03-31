@@ -86,6 +86,19 @@ python optimize_sequential.py \
     --output-dir outputs/sequential
 ```
 
+### 6b. Run point-cloud baseline (same sequential setup)
+
+```bash
+python optimize_pointcloud_sequential.py \
+    --num-views 36 \
+    --steps-per-view 50 \
+    --init-noise 0.15 \
+    --output-dir outputs/pointcloud_baseline
+```
+
+This baseline removes spline structure and optimizes free 3D points directly.
+Use it to compare memory stability and revisitation against the spline method.
+
 ### 7. (Alternative) Submit as batch jobs
 
 Edit `RADIUS=0.02` in `scripts/run_pipeline.slurm` with your best radius, then:
@@ -107,6 +120,7 @@ sbatch scripts/run_pipeline.slurm
 | `dataset.py` | Generates synthetic helix/wave strand scenes with GT control points. | ~1min |
 | `optimize.py` | Optimizes control points from a single viewpoint. Validates the render-update loop. | ~2min |
 | `optimize_sequential.py` | **Core experiment.** Orbits 360° updating persistent control points sequentially. | ~10min |
+| `optimize_pointcloud_sequential.py` | **Baseline.** Same sequential loop, but with unconstrained point-cloud parameters. | ~8-12min |
 
 ## File Structure
 
@@ -156,6 +170,52 @@ The key plot is `outputs/sequential/sequential_optimization.png` showing:
 
 **Good result:** Drift decreases monotonically, stays below initial value.
 **Bad result:** Drift increases during second half of orbit (memory instability).
+
+### `optimize_pointcloud_sequential.py` output
+
+The key plot is `outputs/pointcloud_baseline/pointcloud_baseline.png` showing:
+1. **Point Drift vs Azimuth** — free-point stability through the orbit
+2. **Reprojection Loss per View** — image-space fit quality
+3. **Chamfer + Local-Shape Loss** — 3D geometric consistency without spline priors
+
+Compare this directly against `outputs/sequential/sequential_optimization.png`.
+If spline memory is helping, it should usually maintain better geometric consistency
+for similar reprojection error.
+
+### Quick comparison command pair
+
+```bash
+# Spline memory model
+python optimize_sequential.py \
+    --radius <YOUR_BEST_RADIUS> \
+    --num-views 36 \
+    --steps-per-view 50 \
+    --output-dir outputs/sequential
+
+# Point-cloud baseline
+python optimize_pointcloud_sequential.py \
+    --num-views 36 \
+    --steps-per-view 50 \
+    --init-noise 0.15 \
+    --output-dir outputs/pointcloud_baseline
+```
+
+### Baseline comparison (report-ready table + plot)
+
+After both runs finish, compare them directly:
+
+```bash
+python compare_baselines.py \
+  --spline outputs/sequential/sequential_results.pt \
+  --pointcloud outputs/pointcloud_baseline/pointcloud_baseline_results.pt \
+  --output-dir outputs/comparison
+```
+
+This writes:
+- `outputs/comparison/baseline_comparison.png` (drift trajectories, spline vs point cloud)
+- `outputs/comparison/baseline_comparison_summary.pt` (saved numeric summary)
+- A terminal table with initial/final drift, drift improvement %, reprojection metrics,
+  curvature deviation (spline), and Chamfer distance (point cloud).
 
 ## Key Parameters to Tune
 
