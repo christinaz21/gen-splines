@@ -4,3 +4,11 @@ __pycache__/
 outputs/gen_conv/
 outputs/gen_percurve/
 outputs/training_data/
+outputs/dense_wCurly_50/
+outputs/dense_wCurly_500/
+outputs/quick_straight/
+outputs/quick_straight_v3/
+outputs/quick_wCurly_highnoise/
+outputs/quick_wCurly_v3/
+__pycache__/
+data/hairmodels
