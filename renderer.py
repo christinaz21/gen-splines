@@ -31,6 +31,8 @@ DEFAULT_RENDER_CONFIG = {
     "dist": 4.0,             # Camera distance from origin
     "fov": 60.0,             # Field of view
     "compositor": "alpha",   # "alpha" or "norm_weighted"
+    "bin_size": 0,           # 0 = naive rasterization (avoids coarse-bin overflow)
+    "max_points_per_bin": None,
 }
 
 
@@ -45,11 +47,15 @@ def build_renderer(config: dict = None, device: str = "cuda"):
     """
     cfg = {**DEFAULT_RENDER_CONFIG, **(config or {})}
 
-    raster_settings = PointsRasterizationSettings(
-        image_size=cfg["image_size"],
-        radius=cfg["radius"],
-        points_per_pixel=cfg["points_per_pixel"],
-    )
+    raster_kwargs = {
+        "image_size": cfg["image_size"],
+        "radius": cfg["radius"],
+        "points_per_pixel": cfg["points_per_pixel"],
+        "bin_size": cfg.get("bin_size", 0),
+    }
+    if cfg.get("max_points_per_bin") is not None:
+        raster_kwargs["max_points_per_bin"] = cfg["max_points_per_bin"]
+    raster_settings = PointsRasterizationSettings(**raster_kwargs)
 
     if cfg["compositor"] == "alpha":
         compositor = AlphaCompositor()
@@ -94,11 +100,15 @@ def render_point_cloud(points_3d: torch.Tensor,
 
     cameras = make_cameras(azimuth, elevation, cfg["dist"], device)
 
-    raster_settings = PointsRasterizationSettings(
-        image_size=cfg["image_size"],
-        radius=cfg["radius"],
-        points_per_pixel=cfg["points_per_pixel"],
-    )
+    raster_kwargs = {
+        "image_size": cfg["image_size"],
+        "radius": cfg["radius"],
+        "points_per_pixel": cfg["points_per_pixel"],
+        "bin_size": cfg.get("bin_size", 0),
+    }
+    if cfg.get("max_points_per_bin") is not None:
+        raster_kwargs["max_points_per_bin"] = cfg["max_points_per_bin"]
+    raster_settings = PointsRasterizationSettings(**raster_kwargs)
 
     rasterizer = PointsRasterizer(cameras=cameras, raster_settings=raster_settings)
     compositor = AlphaCompositor() if cfg["compositor"] == "alpha" else NormWeightedCompositor()

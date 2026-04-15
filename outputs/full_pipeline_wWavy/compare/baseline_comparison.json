@@ -1,0 +1,52 @@
+{
+  "spline": {
+    "initial_drift": 0.560279130935669,
+    "final_drift": 0.0939713642001152,
+    "drift_reduction_pct": 83.22775934145851,
+    "time_seconds": 140.72286415100098,
+    "final_view_drift": 0.0939713642001152
+  },
+  "pointcloud": {
+    "initial_drift": 0.5551141500473022,
+    "final_drift": 0.003294308902695775,
+    "drift_reduction_pct": 99.40655288602983,
+    "time_seconds": 78.24604415893555,
+    "final_view_drift": 0.003294308902695775,
+    "initial_chamfer": 0.25387775897979736,
+    "final_chamfer": 0.0023871937301009893,
+    "final_view_chamfer": 0.0023871937301009893
+  },
+  "delta": {
+    "drift_reduction_pct_spline_minus_pointcloud": -16.17879354457132,
+    "final_drift_pointcloud_minus_spline": -0.09067705529741943,
+    "time_seconds_pointcloud_minus_spline": -62.47681999206543
+  },
+  "fairness_checks": {
+    "spline_num_curves": 500,
+    "spline_K": 12,
+    "point_num_curves": null,
+    "point_K": null,
+    "point_points_per_curve": null,
+    "spline_param_count_xyz": 18000,
+    "point_param_count_xyz": null,
+    "budget_match": null,
+    "curve_count_match": null,
+    "source_k_match": null,
+    "granularity_match": null,
+    "warnings": [
+      "Could not fully verify parameter budget from provided files."
+    ]
+  },
+  "winner_multi_metric": {
+    "by_drift_reduction_pct": "pointcloud",
+    "by_final_drift": "pointcloud",
+    "by_runtime": "pointcloud",
+    "by_final_chamfer": "pointcloud_only_metric",
+    "score": {
+      "spline": 0,
+      "pointcloud": 3
+    },
+    "overall_majority_vote": "pointcloud"
+  },
+  "winner_by_drift_reduction": "pointcloud"
+}

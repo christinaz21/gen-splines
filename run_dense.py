@@ -242,7 +242,7 @@ def make_video(res, strands, args, device="cuda"):
     # Stitch
     vp = os.path.join(args.output_dir, "comparison_video.mp4")
     cmd = (f"ffmpeg -y -framerate {args.fps} -i {fd_dir}/frame_%04d.png "
-           f"-c:v libx264 -pix_fmt yuv420p -crf 18 "
+           f"-c:v libopenh264 -b:v 6M -pix_fmt yuv420p "
            f"-vf 'pad=ceil(iw/2)*2:ceil(ih/2)*2' {vp}")
     log("  Stitching video...")
     ret = os.system(cmd)

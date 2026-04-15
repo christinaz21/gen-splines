@@ -1,0 +1,15 @@
+{
+  "model_name": "wCurly",
+  "num_curves": 500,
+  "K": 12,
+  "pc_points_per_curve": 12,
+  "num_points": 6000,
+  "num_views": 72,
+  "steps_per_view": 80,
+  "initial_drift": 0.5551141500473022,
+  "final_drift": 0.0031857267022132874,
+  "drift_reduction_pct": 99.42611322338986,
+  "initial_chamfer": 0.25319159030914307,
+  "final_chamfer": 0.0021521374583244324,
+  "time_seconds": 82.4477789402008
+}

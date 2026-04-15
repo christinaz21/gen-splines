@@ -1,0 +1,15 @@
+{
+  "model_name": "wWavyThin",
+  "num_curves": 500,
+  "K": 12,
+  "pc_points_per_curve": 12,
+  "num_points": 6000,
+  "num_views": 72,
+  "steps_per_view": 80,
+  "initial_drift": 0.5551141500473022,
+  "final_drift": 0.0033167742658406496,
+  "drift_reduction_pct": 99.40250590521643,
+  "initial_chamfer": 0.26316866278648376,
+  "final_chamfer": 0.0021413255017250776,
+  "time_seconds": 80.36063504219055
+}

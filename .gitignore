@@ -12,3 +12,4 @@ outputs/quick_wCurly_highnoise/
 outputs/quick_wCurly_v3/
 __pycache__/
 data/hairmodels
+logs/
