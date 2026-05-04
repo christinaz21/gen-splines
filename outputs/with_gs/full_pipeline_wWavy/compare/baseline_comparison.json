@@ -1,0 +1,36 @@
+{
+  "spline": {
+    "initial_drift": 0.558131754398346,
+    "final_drift": 0.09869524836540222,
+    "drift_reduction_pct": 82.3168548308466,
+    "time_seconds": 155.23213911056519
+  },
+  "pointcloud": {
+    "initial_drift": 0.5551141500473022,
+    "final_drift": 0.003294298192486167,
+    "drift_reduction_pct": 99.4065548154005,
+    "time_seconds": 95.35125494003296,
+    "initial_chamfer": 0.25387775897979736,
+    "final_chamfer": 0.0023876538034528494
+  },
+  "winner_by_drift_reduction": "gaussian",
+  "winner_multi_metric": {
+    "by_drift_reduction_pct": "gaussian",
+    "by_final_drift": "gaussian",
+    "by_runtime": "pointcloud",
+    "score": {
+      "spline": 0,
+      "pointcloud": 1,
+      "gaussian": 2
+    },
+    "overall_majority_vote": "gaussian"
+  },
+  "gaussian": {
+    "initial_drift": 0.5551141500473022,
+    "final_drift": 0.0031754050869494677,
+    "drift_reduction_pct": 99.42797259146089,
+    "time_seconds": 2981.244925737381,
+    "initial_chamfer": 0.25387775897979736,
+    "final_chamfer": 0.0023318049497902393
+  }
+}

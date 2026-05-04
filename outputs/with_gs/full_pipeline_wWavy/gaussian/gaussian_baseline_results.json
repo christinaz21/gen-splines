@@ -1,0 +1,15 @@
+{
+  "model_name": "wWavy",
+  "num_curves": 500,
+  "K": 12,
+  "gs_points_per_curve": 12,
+  "num_points": 6000,
+  "num_views": 72,
+  "steps_per_view": 80,
+  "initial_drift": 0.5551141500473022,
+  "final_drift": 0.0031754050869494677,
+  "drift_reduction_pct": 99.42797259146089,
+  "initial_chamfer": 0.25387775897979736,
+  "final_chamfer": 0.0023318049497902393,
+  "time_seconds": 2981.244925737381
+}

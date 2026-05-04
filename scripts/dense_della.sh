@@ -26,7 +26,7 @@ eval "$(conda shell.bash hook)"  # this is needed to load python packages correc
 
 conda activate /scratch/gpfs/CHIJ/christina/envs/spline_fields
 module load cudatoolkit/11.8
-MODEL="wWavyThin"
+MODEL="wWavy"
 # MODEL=${1:-straight}
 echo "============================================================"
 echo "  Quick Run: ${MODEL}"
@@ -38,13 +38,14 @@ echo "============================================================"
 
 # Run v2_full
 python run_full_baseline_pipeline.py \
-  --model-name wWavyThin \
+  --model-name wWavy \
   --device cuda \
-  --output-root outputs/full_pipeline_wWavyThin \
+  --output-root outputs/with_gs/full_pipeline_wWavy \
   --external-spline-eval-samples 12 \
   --num-curves 500 \
   --K 12 \
   --pc-points-per-curve 12 \
+  --gs-points-per-curve 12 \
 
 
 # python evaluate_external_targets.py \

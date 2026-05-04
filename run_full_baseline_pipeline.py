@@ -1,11 +1,12 @@
 """
-run_full_baseline_pipeline.py — One-command spline vs point-cloud evaluation pipeline.
+run_full_baseline_pipeline.py — One-command baseline evaluation pipeline.
 
 This orchestrates the full workflow so you do not have to run multiple files manually:
   1) run_dense.py
   2) run_pointcloud_baseline.py
-  3) compare_baselines.py
-  4) evaluate_external_targets.py
+  3) run_gaussian_splat_baseline.py
+  4) compare_baselines.py
+  5) evaluate_external_targets.py
 
 Outputs are grouped under a single root directory.
 """
@@ -30,7 +31,7 @@ def q(s):
 
 
 def main():
-    p = argparse.ArgumentParser(description="Run full spline vs point-cloud baseline pipeline")
+    p = argparse.ArgumentParser(description="Run full spline + baseline pipeline")
     p.add_argument("--model-name", default="wStraight")
     p.add_argument("--data-dir", default="data")
     p.add_argument("--device", default="cuda")
@@ -62,6 +63,13 @@ def main():
     p.add_argument("--pc-image-size", type=int, default=256)
     p.add_argument("--pc-radius", type=float, default=0.02)
     p.add_argument("--pc-points-per-pixel", type=int, default=8)
+    p.add_argument("--gs-points-per-curve", type=int, default=12)
+    p.add_argument("--gs-image-size", type=int, default=256)
+    p.add_argument("--gs-points-per-pixel", type=int, default=10)
+    p.add_argument("--gs-init-scale", type=float, default=0.015)
+    p.add_argument("--gs-init-opacity", type=float, default=0.85)
+    p.add_argument("--gs-scale-reg", type=float, default=1e-3)
+    p.add_argument("--gs-opacity-reg", type=float, default=2e-4)
 
     # External eval settings
     p.add_argument("--external-raw-num-strands", type=int, default=3000)
@@ -78,6 +86,7 @@ def main():
     p.add_argument("--quick", action="store_true", help="Use quicker settings for both methods.")
     p.add_argument("--skip-spline", action="store_true", help="Reuse existing spline outputs if present.")
     p.add_argument("--skip-point", action="store_true", help="Reuse existing point outputs if present.")
+    p.add_argument("--skip-gaussian", action="store_true", help="Reuse existing gaussian outputs if present.")
     p.add_argument("--skip-compare", action="store_true")
     p.add_argument("--skip-external", action="store_true")
     args = p.parse_args()
@@ -93,6 +102,7 @@ def main():
     out_root = args.output_root
     spline_out = os.path.join(out_root, "spline")
     point_out = os.path.join(out_root, "pointcloud")
+    gaussian_out = os.path.join(out_root, "gaussian")
     compare_out = os.path.join(out_root, "compare")
     external_out = os.path.join(out_root, "external_eval")
     os.makedirs(out_root, exist_ok=True)
@@ -168,14 +178,49 @@ def main():
     else:
         print("\n[SKIP] point baseline stage", flush=True)
 
+    if not args.skip_gaussian:
+        cmd = (
+            f"{python} run_gaussian_splat_baseline.py "
+            f"--model-name {q(args.model_name)} "
+            f"--data-dir {q(args.data_dir)} "
+            f"--num-curves {args.num_curves} "
+            f"--K {args.K} "
+            f"--seed {args.seed} "
+            f"--gs-points-per-curve {args.gs_points_per_curve} "
+            f"--num-views {args.num_views} "
+            f"--steps-per-view {args.steps_per_view} "
+            f"--lr {args.lr} "
+            f"--init-noise {args.init_noise} "
+            f"--render-weight {args.render_weight} "
+            f"--reproj-weight {args.reproj_weight} "
+            f"--anchor-weight {args.anchor_weight} "
+            f"--view-buffer {args.view_buffer} "
+            f"--ema-decay {args.ema_decay} "
+            f"--image-size {args.gs_image_size} "
+            f"--points-per-pixel {args.gs_points_per_pixel} "
+            f"--gs-init-scale {args.gs_init_scale} "
+            f"--gs-init-opacity {args.gs_init_opacity} "
+            f"--gs-scale-reg {args.gs_scale_reg} "
+            f"--gs-opacity-reg {args.gs_opacity_reg} "
+            f"--device {q(args.device)} "
+            f"--output-dir {q(gaussian_out)} "
+        )
+        if args.quick:
+            cmd += "--quick "
+        run_cmd(cmd, repo_root)
+    else:
+        print("\n[SKIP] gaussian baseline stage", flush=True)
+
     spline_results = os.path.join(spline_out, "opt_results.pt")
     point_results_pt = os.path.join(point_out, "point_baseline_results.pt")
+    gaussian_results_pt = os.path.join(gaussian_out, "gaussian_baseline_results.pt")
 
     if not args.skip_compare:
         cmd = (
             f"{python} compare_baselines.py "
             f"--spline-results {q(spline_results)} "
             f"--point-results {q(point_results_pt)} "
+            f"--gaussian-results {q(gaussian_results_pt)} "
             f"--output-dir {q(compare_out)}"
         )
         run_cmd(cmd, repo_root)
@@ -187,6 +232,7 @@ def main():
             f"{python} evaluate_external_targets.py "
             f"--spline-results {q(spline_results)} "
             f"--point-results {q(point_results_pt)} "
+            f"--gaussian-results {q(gaussian_results_pt)} "
             f"--model-name {q(args.model_name)} "
             f"--data-dir {q(os.path.join(args.data_dir, 'hairmodels'))} "
             f"--spline-eval-samples {args.external_spline_eval_samples} "
@@ -212,6 +258,7 @@ def main():
     print(f"  Output root: {out_root}")
     print(f"  Spline:      {spline_out}")
     print(f"  Point cloud: {point_out}")
+    print(f"  Gaussian:    {gaussian_out}")
     print(f"  Compare:     {compare_out}")
     print(f"  External:    {external_out}")
     print(f"  Total time:  {total:.1f}s")

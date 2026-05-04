@@ -12,6 +12,7 @@ Why this exists:
 Inputs:
   - Spline run results: run_dense.py output opt_results.pt
   - Point baseline results: run_pointcloud_baseline.py output point_baseline_results.pt
+  - Gaussian baseline results: run_gaussian_splat_baseline.py output gaussian_baseline_results.pt (optional)
   - Hair model name / data dir for loading raw strands
 
 Outputs:
@@ -134,7 +135,7 @@ def render_mse_vs_raw(
     return float(np.mean(losses)), losses
 
 
-def render_visual_triptych(raw_points, spline_points, point_points, azimuth, args):
+def render_visual_triptych(raw_points, spline_points, point_points, gaussian_points, azimuth, args):
     cfg = {
         "image_size": args.visual_image_size,
         "radius": args.visual_radius,
@@ -157,7 +158,12 @@ def render_visual_triptych(raw_points, spline_points, point_points, azimuth, arg
         pc = render_point_cloud(
             point_points, azimuth=float(azimuth), elevation=30.0, config=cfg, device=args.device
         )[..., :3].cpu().numpy()
-    return gt, sp, pc
+        gs = None
+        if gaussian_points is not None:
+            gs = render_point_cloud(
+                gaussian_points, azimuth=float(azimuth), elevation=30.0, config=cfg, device=args.device
+            )[..., :3].cpu().numpy()
+    return gt, sp, pc, gs
 
 
 def main():
@@ -196,17 +202,22 @@ def main():
     p.add_argument("--keep-visual-frames", action="store_true")
     p.add_argument("--device", default="cuda")
     p.add_argument("--output-dir", default="outputs/external_eval")
+    p.add_argument("--gaussian-results", default=None)
     args = p.parse_args()
 
     os.makedirs(args.output_dir, exist_ok=True)
 
     spline = load_torch(args.spline_results)
     point = load_torch(args.point_results)
+    gaussian = None
+    if args.gaussian_results is not None and os.path.exists(args.gaussian_results):
+        gaussian = load_torch(args.gaussian_results)
 
     spline_cp = spline["final_cp"].to(args.device)
     with torch.no_grad():
         spline_points = evaluate_bspline(spline_cp, args.spline_eval_samples).reshape(-1, 3)
     point_points = point["final_points"].to(args.device)
+    gaussian_points = gaussian["final_points"].to(args.device) if gaussian is not None else None
 
     hair_path = os.path.join(args.data_dir, f"{args.model_name}.hair")
     raw_points = dense_raw_hair_points(
@@ -251,6 +262,23 @@ def main():
     if abs(mse_spline - mse_point) < 1e-12:
         winner_heldout = "tie"
 
+    chamfer_gaussian = None
+    mse_gaussian = None
+    mse_gaussian_per_view = None
+    if gaussian_points is not None:
+        gaussian_c = sample_for_chamfer(gaussian_points, args.chamfer_max_points, seed=19)
+        chamfer_gaussian = approx_chamfer(gaussian_c, raw_c)
+        mse_gaussian, mse_gaussian_per_view = render_mse_vs_raw(
+            raw_points,
+            gaussian_points,
+            az,
+            args.image_size,
+            args.radius,
+            args.device,
+            bin_size=args.bin_size,
+            max_points_per_bin=args.max_points_per_bin,
+        )
+
     out = {
         "model_name": args.model_name,
         "raw_target": {
@@ -269,6 +297,14 @@ def main():
             "approx_chamfer_to_raw": chamfer_point,
             "heldout_render_mse_mean": mse_point,
             "heldout_render_mse_per_view": mse_point_per_view,
+        },
+        "gaussian": None
+        if gaussian_points is None
+        else {
+            "num_points_eval": int(gaussian_points.shape[0]),
+            "approx_chamfer_to_raw": chamfer_gaussian,
+            "heldout_render_mse_mean": mse_gaussian,
+            "heldout_render_mse_per_view": mse_gaussian_per_view,
         },
         "winners": {
             "by_approx_chamfer_to_raw": winner_chamfer,
@@ -294,6 +330,11 @@ def main():
         f"- Raw target points: `{out['raw_target']['num_points']}` from `{hair_path}`",
         f"- Spline eval points: `{out['spline']['num_points_eval']}`",
         f"- Point eval points: `{out['pointcloud']['num_points_eval']}`",
+        (
+            f"- Gaussian eval points: `{out['gaussian']['num_points_eval']}`"
+            if out["gaussian"] is not None
+            else "- Gaussian eval points: `(not provided)`"
+        ),
         "",
         "## Metrics",
         "",
@@ -301,6 +342,11 @@ def main():
         "|---|---:|---:|",
         f"| Spline | {chamfer_spline:.6f} | {mse_spline:.6f} |",
         f"| Point cloud | {chamfer_point:.6f} | {mse_point:.6f} |",
+    ]
+    if out["gaussian"] is not None:
+        md_lines.append(f"| Gaussian splat | {chamfer_gaussian:.6f} | {mse_gaussian:.6f} |")
+    md_lines.extend(
+        [
         "",
         "## Winners",
         "",
@@ -313,6 +359,7 @@ def main():
         "- Held-out views are interleaved (half-step offset) relative to training azimuth grid.",
         "",
     ]
+    )
     md_path = os.path.join(args.output_dir, "external_eval.md")
     with open(md_path, "w", encoding="utf-8") as f:
         f.write("\n".join(md_lines))
@@ -329,6 +376,8 @@ def main():
 
         axes[0].plot(x, mse_spline_per_view, "b-", label="Spline")
         axes[0].plot(x, mse_point_per_view, "m-", label="Point cloud")
+        if mse_gaussian_per_view is not None:
+            axes[0].plot(x, mse_gaussian_per_view, color="#2ca02c", label="Gaussian")
         axes[0].set_title("Held-out Render MSE per View")
         axes[0].set_xlabel("Held-out view index")
         axes[0].set_ylabel("MSE")
@@ -337,12 +386,18 @@ def main():
         labels = ["Spline", "Point cloud"]
         chamfer_vals = [chamfer_spline, chamfer_point]
         mse_vals = [mse_spline, mse_point]
+        colors = ["#4C72B0", "#C44E52"]
+        if chamfer_gaussian is not None and mse_gaussian is not None:
+            labels.append("Gaussian")
+            chamfer_vals.append(chamfer_gaussian)
+            mse_vals.append(mse_gaussian)
+            colors.append("#2ca02c")
 
-        axes[1].bar(labels, chamfer_vals, color=["#4C72B0", "#C44E52"])
+        axes[1].bar(labels, chamfer_vals, color=colors)
         axes[1].set_title("Approx Chamfer to Raw")
         axes[1].set_ylabel("Lower is better")
 
-        axes[2].bar(labels, mse_vals, color=["#4C72B0", "#C44E52"])
+        axes[2].bar(labels, mse_vals, color=colors)
         axes[2].set_title("Held-out Render MSE (mean)")
         axes[2].set_ylabel("Lower is better")
 
@@ -363,19 +418,20 @@ def main():
         matplotlib.use("Agg")
         import matplotlib.pyplot as plt
 
-        gt_im, sp_im, pc_im = render_visual_triptych(
-            raw_points, spline_points, point_points, azimuth=args.visual_azimuth, args=args
+        gt_im, sp_im, pc_im, gs_im = render_visual_triptych(
+            raw_points, spline_points, point_points, gaussian_points, azimuth=args.visual_azimuth, args=args
         )
-        fig, axes = plt.subplots(1, 3, figsize=(16, 6), facecolor="#080810")
+        ncols = 4 if gs_im is not None else 3
+        fig, axes = plt.subplots(1, ncols, figsize=(5.2 * ncols, 6), facecolor="#080810")
         fig.subplots_adjust(wspace=0.02, left=0.01, right=0.99, top=0.84, bottom=0.08)
-        for ax, (im, title) in zip(
-            axes,
-            [
-                (gt_im, "External Raw Target (Dense Hair)"),
-                (sp_im, "Spline Final"),
-                (pc_im, "Point-Cloud Final"),
-            ],
-        ):
+        panel_data = [
+            (gt_im, "External Raw Target (Dense Hair)"),
+            (sp_im, "Spline Final"),
+            (pc_im, "Point-Cloud Final"),
+        ]
+        if gs_im is not None:
+            panel_data.append((gs_im, "Gaussian Final"))
+        for ax, (im, title) in zip(axes, panel_data):
             ax.imshow(np.clip(im, 0, 1))
             ax.axis("off")
             ax.set_title(title, color="#e0d0a0", fontsize=12, fontweight="bold", pad=10)
@@ -405,19 +461,20 @@ def main():
             os.makedirs(frames_dir, exist_ok=True)
             azimuths_vis = np.linspace(0, 360, args.visual_num_frames, endpoint=False)
             for i, az_vis in enumerate(azimuths_vis):
-                g, s, p_im = render_visual_triptych(
-                    raw_points, spline_points, point_points, azimuth=az_vis, args=args
+                g, s, p_im, g_im = render_visual_triptych(
+                    raw_points, spline_points, point_points, gaussian_points, azimuth=az_vis, args=args
                 )
-                fig, axes = plt.subplots(1, 3, figsize=(16, 6), facecolor="#080810")
+                ncols = 4 if g_im is not None else 3
+                fig, axes = plt.subplots(1, ncols, figsize=(5.2 * ncols, 6), facecolor="#080810")
                 fig.subplots_adjust(wspace=0.02, left=0.01, right=0.99, top=0.84, bottom=0.08)
-                for ax, (im, title) in zip(
-                    axes,
-                    [
-                        (g, "External Raw Target (Dense Hair)"),
-                        (s, "Spline Final"),
-                        (p_im, "Point-Cloud Final"),
-                    ],
-                ):
+                panel_data = [
+                    (g, "External Raw Target (Dense Hair)"),
+                    (s, "Spline Final"),
+                    (p_im, "Point-Cloud Final"),
+                ]
+                if g_im is not None:
+                    panel_data.append((g_im, "Gaussian Final"))
+                for ax, (im, title) in zip(axes, panel_data):
                     ax.imshow(np.clip(im, 0, 1))
                     ax.axis("off")
                     ax.set_title(title, color="#e0d0a0", fontsize=12, fontweight="bold", pad=10)

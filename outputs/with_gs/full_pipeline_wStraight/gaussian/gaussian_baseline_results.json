@@ -1,0 +1,15 @@
+{
+  "model_name": "wStraight",
+  "num_curves": 500,
+  "K": 12,
+  "gs_points_per_curve": 12,
+  "num_points": 6000,
+  "num_views": 72,
+  "steps_per_view": 80,
+  "initial_drift": 0.5551141500473022,
+  "final_drift": 0.003124858718365431,
+  "drift_reduction_pct": 99.43707817246252,
+  "initial_chamfer": 0.2549267113208771,
+  "final_chamfer": 0.002310166135430336,
+  "time_seconds": 2956.9914202690125
+}
