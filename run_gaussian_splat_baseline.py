@@ -44,12 +44,18 @@ def gaussian_splat_render(
     points_per_pixel,
     device,
     bg=(0.03, 0.03, 0.05),
+    features=None,
 ):
     from pytorch3d.renderer import PointsRasterizationSettings, PointsRasterizer
     from pytorch3d.structures import Pointclouds
 
     n_points = means.shape[0]
-    feats = torch.ones((n_points, 3), device=device, dtype=means.dtype)
+    if features is None:
+        feats = torch.ones((n_points, 3), device=device, dtype=means.dtype)
+    else:
+        feats = features.to(device=device, dtype=means.dtype)
+        if feats.shape != (n_points, 3):
+            raise ValueError(f"features must be (N,3) with N={n_points}, got {tuple(feats.shape)}")
     cloud = Pointclouds(points=[means], features=[feats])
 
     # Use a reasonably large raster radius and learn effective gaussian width per point.
