@@ -1,0 +1,384 @@
+
+=================================================================
+  Sequential Persistent Curve Memory (Reprojection)
+  Views: 36  |  Window: 5  |  Anchor: 0.0
+=================================================================
+  GT scene: 30 curves, 8 control points each
+  36 viewpoints, 100 steps each
+  Initial CP drift: 0.2465
+  View   1/36  az=   0.0°  reproj=0.000256  CP_drift=0.1891  [win=1]  [2.1s]
+  View   2/36  az=  10.0°  reproj=0.000088  CP_drift=0.1642  [win=2]  [4.6s]
+  View   3/36  az=  20.0°  reproj=0.000042  CP_drift=0.1535  [win=3]  [7.6s]
+  View   4/36  az=  30.0°  reproj=0.000029  CP_drift=0.1465  [win=4]  [11.6s]
+  View   5/36  az=  40.0°  reproj=0.000023  CP_drift=0.1405  [win=5]  [16.1s]
+  View   6/36  az=  50.0°  reproj=0.000018  CP_drift=0.1375  [win=5]  [20.6s]
+  View   7/36  az=  60.0°  reproj=0.000015  CP_drift=0.1359  [win=5]  [25.1s]
+  View   8/36  az=  70.0°  reproj=0.000013  CP_drift=0.1348  [win=5]  [29.6s]
+  View   9/36  az=  80.0°  reproj=0.000011  CP_drift=0.1339  [win=5]  [34.1s]
+  View  10/36  az=  90.0°  reproj=0.000010  CP_drift=0.1331  [win=5]  [38.7s]
+  View  11/36  az= 100.0°  reproj=0.000009  CP_drift=0.1325  [win=5]  [43.2s]
+  View  12/36  az= 110.0°  reproj=0.000009  CP_drift=0.1321  [win=5]  [47.7s]
+  View  13/36  az= 120.0°  reproj=0.000008  CP_drift=0.1320  [win=5]  [52.2s]
+  View  14/36  az= 130.0°  reproj=0.000008  CP_drift=0.1320  [win=5]  [56.7s]
+  View  15/36  az= 140.0°  reproj=0.000009  CP_drift=0.1319  [win=5]  [61.5s]
+  View  16/36  az= 150.0°  reproj=0.000009  CP_drift=0.1317  [win=5]  [66.4s]
+  View  17/36  az= 160.0°  reproj=0.000010  CP_drift=0.1314  [win=5]  [71.3s]
+  View  18/36  az= 170.0°  reproj=0.000010  CP_drift=0.1308  [win=5]  [76.2s]
+  View  19/36  az= 180.0°  reproj=0.000011  CP_drift=0.1301  [win=5]  [81.0s]
+  View  20/36  az= 190.0°  reproj=0.000011  CP_drift=0.1294  [win=5]  [85.9s]
+  View  21/36  az= 200.0°  reproj=0.000011  CP_drift=0.1290  [win=5]  [90.7s]
+  View  22/36  az= 210.0°  reproj=0.000011  CP_drift=0.1289  [win=5]  [95.6s]
+  View  23/36  az= 220.0°  reproj=0.000011  CP_drift=0.1290  [win=5]  [100.5s]
+  View  24/36  az= 230.0°  reproj=0.000011  CP_drift=0.1292  [win=5]  [105.4s]
+  View  25/36  az= 240.0°  reproj=0.000010  CP_drift=0.1294  [win=5]  [110.2s]
+  View  26/36  az= 250.0°  reproj=0.000010  CP_drift=0.1296  [win=5]  [115.2s]
+  View  27/36  az= 260.0°  reproj=0.000009  CP_drift=0.1297  [win=5]  [120.3s]
+  View  28/36  az= 270.0°  reproj=0.000009  CP_drift=0.1296  [win=5]  [125.0s]
+  View  29/36  az= 280.0°  reproj=0.000008  CP_drift=0.1294  [win=5]  [129.5s]
+  View  30/36  az= 290.0°  reproj=0.000008  CP_drift=0.1292  [win=5]  [134.0s]
+  View  31/36  az= 300.0°  reproj=0.000008  CP_drift=0.1289  [win=5]  [138.6s]
+  View  32/36  az= 310.0°  reproj=0.000009  CP_drift=0.1287  [win=5]  [143.1s]
+  View  33/36  az= 320.0°  reproj=0.000009  CP_drift=0.1285  [win=5]  [147.6s]
+  View  34/36  az= 330.0°  reproj=0.000009  CP_drift=0.1283  [win=5]  [152.1s]
+  View  35/36  az= 340.0°  reproj=0.000010  CP_drift=0.1281  [win=5]  [156.6s]
+  View  36/36  az= 350.0°  reproj=0.000011  CP_drift=0.1279  [win=5]  [161.1s]
+
+  --- Revisitation Test ---
+  Azimuth     0°: reproj loss = 0.000015
+  Azimuth    90°: reproj loss = 0.000021
+  Azimuth   180°: reproj loss = 0.000026
+  Azimuth   270°: reproj loss = 0.000015
+
+  ============================================================
+  RESULTS (sequential, 36 views)
+  anchor_w=0.0, steps/view=100
+  ============================================================
+  CP drift:  0.2465 -> 0.1279  (+48.1%)
+  Curvature deviation:    2.160023
+  Avg revisit reproj:     0.000019
+  Total steps:            3600
+  Memory: STABLE (2nd half 0.1291 <= 1st half 0.1402)
+  Saved plot to outputs/ablation_anchor_0.0/sequential_optimization.png
+
+  All results saved to outputs/ablation_anchor_0.0/
+
+
+=================================================================
+  Sequential Persistent Curve Memory (Reprojection)
+  Views: 36  |  Window: 5  |  Anchor: 0.01
+=================================================================
+  GT scene: 30 curves, 8 control points each
+  36 viewpoints, 100 steps each
+  Initial CP drift: 0.2465
+  View   1/36  az=   0.0°  reproj=0.000265  CP_drift=0.1885  [win=1]  [2.1s]
+  View   2/36  az=  10.0°  reproj=0.000098  CP_drift=0.1621  [win=2]  [4.7s]
+  View   3/36  az=  20.0°  reproj=0.000051  CP_drift=0.1460  [win=3]  [8.0s]
+  View   4/36  az=  30.0°  reproj=0.000036  CP_drift=0.1343  [win=4]  [12.0s]
+  View   5/36  az=  40.0°  reproj=0.000029  CP_drift=0.1254  [win=5]  [17.0s]
+  View   6/36  az=  50.0°  reproj=0.000023  CP_drift=0.1203  [win=5]  [22.0s]
+  View   7/36  az=  60.0°  reproj=0.000019  CP_drift=0.1171  [win=5]  [27.0s]
+  View   8/36  az=  70.0°  reproj=0.000017  CP_drift=0.1151  [win=5]  [32.0s]
+  View   9/36  az=  80.0°  reproj=0.000015  CP_drift=0.1140  [win=5]  [37.0s]
+  View  10/36  az=  90.0°  reproj=0.000013  CP_drift=0.1133  [win=5]  [42.0s]
+  View  11/36  az= 100.0°  reproj=0.000012  CP_drift=0.1130  [win=5]  [47.0s]
+  View  12/36  az= 110.0°  reproj=0.000012  CP_drift=0.1129  [win=5]  [52.0s]
+  View  13/36  az= 120.0°  reproj=0.000011  CP_drift=0.1129  [win=5]  [57.0s]
+  View  14/36  az= 130.0°  reproj=0.000011  CP_drift=0.1128  [win=5]  [62.0s]
+  View  15/36  az= 140.0°  reproj=0.000012  CP_drift=0.1125  [win=5]  [67.0s]
+  View  16/36  az= 150.0°  reproj=0.000012  CP_drift=0.1121  [win=5]  [72.0s]
+  View  17/36  az= 160.0°  reproj=0.000013  CP_drift=0.1114  [win=5]  [77.0s]
+  View  18/36  az= 170.0°  reproj=0.000013  CP_drift=0.1107  [win=5]  [82.0s]
+  View  19/36  az= 180.0°  reproj=0.000014  CP_drift=0.1099  [win=5]  [87.0s]
+  View  20/36  az= 190.0°  reproj=0.000014  CP_drift=0.1092  [win=5]  [92.0s]
+  View  21/36  az= 200.0°  reproj=0.000014  CP_drift=0.1088  [win=5]  [97.0s]
+  View  22/36  az= 210.0°  reproj=0.000014  CP_drift=0.1088  [win=5]  [102.0s]
+  View  23/36  az= 220.0°  reproj=0.000014  CP_drift=0.1091  [win=5]  [107.0s]
+  View  24/36  az= 230.0°  reproj=0.000013  CP_drift=0.1099  [win=5]  [112.0s]
+  View  25/36  az= 240.0°  reproj=0.000013  CP_drift=0.1110  [win=5]  [117.0s]
+  View  26/36  az= 250.0°  reproj=0.000012  CP_drift=0.1123  [win=5]  [122.0s]
+  View  27/36  az= 260.0°  reproj=0.000011  CP_drift=0.1136  [win=5]  [127.0s]
+  View  28/36  az= 270.0°  reproj=0.000010  CP_drift=0.1149  [win=5]  [132.0s]
+  View  29/36  az= 280.0°  reproj=0.000010  CP_drift=0.1160  [win=5]  [137.0s]
+  View  30/36  az= 290.0°  reproj=0.000009  CP_drift=0.1169  [win=5]  [142.0s]
+  View  31/36  az= 300.0°  reproj=0.000009  CP_drift=0.1174  [win=5]  [147.0s]
+  View  32/36  az= 310.0°  reproj=0.000010  CP_drift=0.1177  [win=5]  [152.0s]
+  View  33/36  az= 320.0°  reproj=0.000010  CP_drift=0.1177  [win=5]  [157.0s]
+  View  34/36  az= 330.0°  reproj=0.000011  CP_drift=0.1174  [win=5]  [162.0s]
+  View  35/36  az= 340.0°  reproj=0.000011  CP_drift=0.1170  [win=5]  [167.0s]
+  View  36/36  az= 350.0°  reproj=0.000012  CP_drift=0.1165  [win=5]  [172.0s]
+
+  --- Revisitation Test ---
+  Azimuth     0°: reproj loss = 0.000017
+  Azimuth    90°: reproj loss = 0.000019
+  Azimuth   180°: reproj loss = 0.000024
+  Azimuth   270°: reproj loss = 0.000013
+
+  ============================================================
+  RESULTS (sequential, 36 views)
+  anchor_w=0.01, steps/view=100
+  ============================================================
+  CP drift:  0.2465 -> 0.1165  (+52.7%)
+  Curvature deviation:    2.106862
+  Avg revisit reproj:     0.000018
+  Total steps:            3600
+  Memory: STABLE (2nd half 0.1136 <= 1st half 0.1241)
+  Saved plot to outputs/ablation_anchor_0.01/sequential_optimization.png
+
+  All results saved to outputs/ablation_anchor_0.01/
+
+
+=================================================================
+  Sequential Persistent Curve Memory (Reprojection)
+  Views: 36  |  Window: 5  |  Anchor: 0.02
+=================================================================
+  GT scene: 30 curves, 8 control points each
+  36 viewpoints, 100 steps each
+  Initial CP drift: 0.2465
+  View   1/36  az=   0.0°  reproj=0.000274  CP_drift=0.1913  [win=1]  [2.2s]
+  View   2/36  az=  10.0°  reproj=0.000109  CP_drift=0.1676  [win=2]  [4.7s]
+  View   3/36  az=  20.0°  reproj=0.000060  CP_drift=0.1533  [win=3]  [7.8s]
+  View   4/36  az=  30.0°  reproj=0.000043  CP_drift=0.1427  [win=4]  [11.8s]
+  View   5/36  az=  40.0°  reproj=0.000036  CP_drift=0.1338  [win=5]  [16.8s]
+  View   6/36  az=  50.0°  reproj=0.000029  CP_drift=0.1280  [win=5]  [21.8s]
+  View   7/36  az=  60.0°  reproj=0.000024  CP_drift=0.1236  [win=5]  [26.8s]
+  View   8/36  az=  70.0°  reproj=0.000021  CP_drift=0.1202  [win=5]  [31.8s]
+  View   9/36  az=  80.0°  reproj=0.000019  CP_drift=0.1176  [win=5]  [36.8s]
+  View  10/36  az=  90.0°  reproj=0.000017  CP_drift=0.1156  [win=5]  [41.8s]
+  View  11/36  az= 100.0°  reproj=0.000015  CP_drift=0.1141  [win=5]  [46.8s]
+  View  12/36  az= 110.0°  reproj=0.000014  CP_drift=0.1130  [win=5]  [51.8s]
+  View  13/36  az= 120.0°  reproj=0.000014  CP_drift=0.1121  [win=5]  [56.8s]
+  View  14/36  az= 130.0°  reproj=0.000014  CP_drift=0.1114  [win=5]  [61.8s]
+  View  15/36  az= 140.0°  reproj=0.000014  CP_drift=0.1105  [win=5]  [66.8s]
+  View  16/36  az= 150.0°  reproj=0.000015  CP_drift=0.1096  [win=5]  [71.8s]
+  View  17/36  az= 160.0°  reproj=0.000015  CP_drift=0.1084  [win=5]  [76.8s]
+  View  18/36  az= 170.0°  reproj=0.000016  CP_drift=0.1072  [win=5]  [81.8s]
+  View  19/36  az= 180.0°  reproj=0.000017  CP_drift=0.1060  [win=5]  [86.8s]
+  View  20/36  az= 190.0°  reproj=0.000017  CP_drift=0.1049  [win=5]  [91.8s]
+  View  21/36  az= 200.0°  reproj=0.000017  CP_drift=0.1041  [win=5]  [96.8s]
+  View  22/36  az= 210.0°  reproj=0.000017  CP_drift=0.1035  [win=5]  [101.8s]
+  View  23/36  az= 220.0°  reproj=0.000017  CP_drift=0.1034  [win=5]  [106.8s]
+  View  24/36  az= 230.0°  reproj=0.000016  CP_drift=0.1037  [win=5]  [111.8s]
+  View  25/36  az= 240.0°  reproj=0.000015  CP_drift=0.1043  [win=5]  [116.8s]
+  View  26/36  az= 250.0°  reproj=0.000014  CP_drift=0.1051  [win=5]  [121.8s]
+  View  27/36  az= 260.0°  reproj=0.000013  CP_drift=0.1061  [win=5]  [126.8s]
+  View  28/36  az= 270.0°  reproj=0.000012  CP_drift=0.1072  [win=5]  [131.8s]
+  View  29/36  az= 280.0°  reproj=0.000011  CP_drift=0.1081  [win=5]  [136.8s]
+  View  30/36  az= 290.0°  reproj=0.000011  CP_drift=0.1088  [win=5]  [141.8s]
+  View  31/36  az= 300.0°  reproj=0.000011  CP_drift=0.1094  [win=5]  [146.8s]
+  View  32/36  az= 310.0°  reproj=0.000011  CP_drift=0.1096  [win=5]  [151.8s]
+  View  33/36  az= 320.0°  reproj=0.000012  CP_drift=0.1095  [win=5]  [156.8s]
+  View  34/36  az= 330.0°  reproj=0.000012  CP_drift=0.1092  [win=5]  [161.8s]
+  View  35/36  az= 340.0°  reproj=0.000013  CP_drift=0.1087  [win=5]  [166.8s]
+  View  36/36  az= 350.0°  reproj=0.000014  CP_drift=0.1082  [win=5]  [171.8s]
+
+  --- Revisitation Test ---
+  Azimuth     0°: reproj loss = 0.000020
+  Azimuth    90°: reproj loss = 0.000020
+  Azimuth   180°: reproj loss = 0.000027
+  Azimuth   270°: reproj loss = 0.000013
+
+  ============================================================
+  RESULTS (sequential, 36 views)
+  anchor_w=0.02, steps/view=100
+  ============================================================
+  CP drift:  0.2465 -> 0.1082  (+56.1%)
+  Curvature deviation:    2.087943
+  Avg revisit reproj:     0.000020
+  Total steps:            3600
+  Memory: STABLE (2nd half 0.1067 <= 1st half 0.1267)
+  Saved plot to outputs/ablation_anchor_0.02/sequential_optimization.png
+
+  All results saved to outputs/ablation_anchor_0.02/
+
+
+=================================================================
+  Sequential Persistent Curve Memory (Reprojection)
+  Views: 36  |  Window: 5  |  Anchor: 0.05
+=================================================================
+  GT scene: 30 curves, 8 control points each
+  36 viewpoints, 100 steps each
+  Initial CP drift: 0.2465
+  View   1/36  az=   0.0°  reproj=0.000302  CP_drift=0.1979  [win=1]  [1.9s]
+  View   2/36  az=  10.0°  reproj=0.000144  CP_drift=0.1795  [win=2]  [4.1s]
+  View   3/36  az=  20.0°  reproj=0.000092  CP_drift=0.1685  [win=3]  [7.1s]
+  View   4/36  az=  30.0°  reproj=0.000070  CP_drift=0.1598  [win=4]  [11.4s]
+  View   5/36  az=  40.0°  reproj=0.000059  CP_drift=0.1520  [win=5]  [16.0s]
+  View   6/36  az=  50.0°  reproj=0.000048  CP_drift=0.1459  [win=5]  [20.7s]
+  View   7/36  az=  60.0°  reproj=0.000040  CP_drift=0.1405  [win=5]  [25.3s]
+  View   8/36  az=  70.0°  reproj=0.000035  CP_drift=0.1356  [win=5]  [30.0s]
+  View   9/36  az=  80.0°  reproj=0.000031  CP_drift=0.1312  [win=5]  [34.7s]
+  View  10/36  az=  90.0°  reproj=0.000028  CP_drift=0.1273  [win=5]  [39.4s]
+  View  11/36  az= 100.0°  reproj=0.000025  CP_drift=0.1238  [win=5]  [44.1s]
+  View  12/36  az= 110.0°  reproj=0.000024  CP_drift=0.1208  [win=5]  [48.8s]
+  View  13/36  az= 120.0°  reproj=0.000022  CP_drift=0.1182  [win=5]  [53.4s]
+  View  14/36  az= 130.0°  reproj=0.000021  CP_drift=0.1160  [win=5]  [58.0s]
+  View  15/36  az= 140.0°  reproj=0.000021  CP_drift=0.1140  [win=5]  [62.6s]
+  View  16/36  az= 150.0°  reproj=0.000021  CP_drift=0.1123  [win=5]  [67.2s]
+  View  17/36  az= 160.0°  reproj=0.000021  CP_drift=0.1108  [win=5]  [71.8s]
+  View  18/36  az= 170.0°  reproj=0.000021  CP_drift=0.1093  [win=5]  [76.4s]
+  View  19/36  az= 180.0°  reproj=0.000022  CP_drift=0.1079  [win=5]  [81.0s]
+  View  20/36  az= 190.0°  reproj=0.000022  CP_drift=0.1067  [win=5]  [85.6s]
+  View  21/36  az= 200.0°  reproj=0.000022  CP_drift=0.1056  [win=5]  [90.2s]
+  View  22/36  az= 210.0°  reproj=0.000022  CP_drift=0.1048  [win=5]  [94.8s]
+  View  23/36  az= 220.0°  reproj=0.000021  CP_drift=0.1043  [win=5]  [99.4s]
+  View  24/36  az= 230.0°  reproj=0.000020  CP_drift=0.1040  [win=5]  [104.0s]
+  View  25/36  az= 240.0°  reproj=0.000019  CP_drift=0.1041  [win=5]  [108.6s]
+  View  26/36  az= 250.0°  reproj=0.000017  CP_drift=0.1044  [win=5]  [113.2s]
+  View  27/36  az= 260.0°  reproj=0.000016  CP_drift=0.1048  [win=5]  [117.8s]
+  View  28/36  az= 270.0°  reproj=0.000015  CP_drift=0.1053  [win=5]  [122.4s]
+  View  29/36  az= 280.0°  reproj=0.000014  CP_drift=0.1058  [win=5]  [127.0s]
+  View  30/36  az= 290.0°  reproj=0.000013  CP_drift=0.1062  [win=5]  [131.6s]
+  View  31/36  az= 300.0°  reproj=0.000013  CP_drift=0.1065  [win=5]  [136.2s]
+  View  32/36  az= 310.0°  reproj=0.000014  CP_drift=0.1066  [win=5]  [140.8s]
+  View  33/36  az= 320.0°  reproj=0.000015  CP_drift=0.1065  [win=5]  [145.4s]
+  View  34/36  az= 330.0°  reproj=0.000016  CP_drift=0.1061  [win=5]  [150.0s]
+  View  35/36  az= 340.0°  reproj=0.000017  CP_drift=0.1056  [win=5]  [154.6s]
+  View  36/36  az= 350.0°  reproj=0.000018  CP_drift=0.1050  [win=5]  [159.2s]
+
+  --- Revisitation Test ---
+  Azimuth     0°: reproj loss = 0.000025
+  Azimuth    90°: reproj loss = 0.000021
+  Azimuth   180°: reproj loss = 0.000029
+  Azimuth   270°: reproj loss = 0.000014
+
+  ============================================================
+  RESULTS (sequential, 36 views)
+  anchor_w=0.05, steps/view=100
+  ============================================================
+  CP drift:  0.2465 -> 0.1050  (+57.4%)
+  Curvature deviation:    2.019385
+  Avg revisit reproj:     0.000022
+  Total steps:            3600
+  Memory: STABLE (2nd half 0.1056 <= 1st half 0.1369)
+  Saved plot to outputs/ablation_anchor_0.05/sequential_optimization.png
+
+  All results saved to outputs/ablation_anchor_0.05/
+
+
+=================================================================
+  Sequential Persistent Curve Memory (Reprojection)
+  Views: 36  |  Window: 5  |  Anchor: 0.1
+=================================================================
+  GT scene: 30 curves, 8 control points each
+  36 viewpoints, 100 steps each
+  Initial CP drift: 0.2465
+  View   1/36  az=   0.0°  reproj=0.000350  CP_drift=0.2050  [win=1]  [2.1s]
+  View   2/36  az=  10.0°  reproj=0.000207  CP_drift=0.1917  [win=2]  [4.4s]
+  View   3/36  az=  20.0°  reproj=0.000151  CP_drift=0.1831  [win=3]  [7.4s]
+  View   4/36  az=  30.0°  reproj=0.000121  CP_drift=0.1759  [win=4]  [11.4s]
+  View   5/36  az=  40.0°  reproj=0.000103  CP_drift=0.1692  [win=5]  [16.1s]
+  View   6/36  az=  50.0°  reproj=0.000086  CP_drift=0.1633  [win=5]  [20.7s]
+  View   7/36  az=  60.0°  reproj=0.000074  CP_drift=0.1577  [win=5]  [25.3s]
+  View   8/36  az=  70.0°  reproj=0.000066  CP_drift=0.1524  [win=5]  [29.9s]
+  View   9/36  az=  80.0°  reproj=0.000060  CP_drift=0.1472  [win=5]  [34.4s]
+  View  10/36  az=  90.0°  reproj=0.000055  CP_drift=0.1424  [win=5]  [39.0s]
+  View  11/36  az= 100.0°  reproj=0.000051  CP_drift=0.1379  [win=5]  [43.6s]
+  View  12/36  az= 110.0°  reproj=0.000047  CP_drift=0.1336  [win=5]  [48.4s]
+  View  13/36  az= 120.0°  reproj=0.000044  CP_drift=0.1297  [win=5]  [53.1s]
+  View  14/36  az= 130.0°  reproj=0.000041  CP_drift=0.1260  [win=5]  [57.7s]
+  View  15/36  az= 140.0°  reproj=0.000039  CP_drift=0.1227  [win=5]  [62.5s]
+  View  16/36  az= 150.0°  reproj=0.000036  CP_drift=0.1197  [win=5]  [67.5s]
+  View  17/36  az= 160.0°  reproj=0.000034  CP_drift=0.1171  [win=5]  [72.5s]
+  View  18/36  az= 170.0°  reproj=0.000033  CP_drift=0.1148  [win=5]  [77.5s]
+  View  19/36  az= 180.0°  reproj=0.000031  CP_drift=0.1129  [win=5]  [82.4s]
+  View  20/36  az= 190.0°  reproj=0.000030  CP_drift=0.1112  [win=5]  [87.4s]
+  View  21/36  az= 200.0°  reproj=0.000028  CP_drift=0.1098  [win=5]  [92.4s]
+  View  22/36  az= 210.0°  reproj=0.000027  CP_drift=0.1086  [win=5]  [97.4s]
+  View  23/36  az= 220.0°  reproj=0.000025  CP_drift=0.1078  [win=5]  [102.3s]
+  View  24/36  az= 230.0°  reproj=0.000023  CP_drift=0.1072  [win=5]  [107.3s]
+  View  25/36  az= 240.0°  reproj=0.000022  CP_drift=0.1069  [win=5]  [112.3s]
+  View  26/36  az= 250.0°  reproj=0.000020  CP_drift=0.1068  [win=5]  [117.3s]
+  View  27/36  az= 260.0°  reproj=0.000018  CP_drift=0.1069  [win=5]  [122.3s]
+  View  28/36  az= 270.0°  reproj=0.000017  CP_drift=0.1070  [win=5]  [126.8s]
+  View  29/36  az= 280.0°  reproj=0.000016  CP_drift=0.1072  [win=5]  [131.4s]
+  View  30/36  az= 290.0°  reproj=0.000015  CP_drift=0.1074  [win=5]  [136.0s]
+  View  31/36  az= 300.0°  reproj=0.000015  CP_drift=0.1076  [win=5]  [140.5s]
+  View  32/36  az= 310.0°  reproj=0.000015  CP_drift=0.1076  [win=5]  [145.1s]
+  View  33/36  az= 320.0°  reproj=0.000016  CP_drift=0.1075  [win=5]  [149.7s]
+  View  34/36  az= 330.0°  reproj=0.000017  CP_drift=0.1073  [win=5]  [154.3s]
+  View  35/36  az= 340.0°  reproj=0.000018  CP_drift=0.1070  [win=5]  [158.9s]
+  View  36/36  az= 350.0°  reproj=0.000020  CP_drift=0.1066  [win=5]  [164.1s]
+
+  --- Revisitation Test ---
+  Azimuth     0°: reproj loss = 0.000025
+  Azimuth    90°: reproj loss = 0.000019
+  Azimuth   180°: reproj loss = 0.000027
+  Azimuth   270°: reproj loss = 0.000014
+
+  ============================================================
+  RESULTS (sequential, 36 views)
+  anchor_w=0.1, steps/view=100
+  ============================================================
+  CP drift:  0.2465 -> 0.1066  (+56.8%)
+  Curvature deviation:    1.920407
+  Avg revisit reproj:     0.000021
+  Total steps:            3600
+  Memory: STABLE (2nd half 0.1079 <= 1st half 0.1494)
+  Saved plot to outputs/ablation_anchor_0.1/sequential_optimization.png
+
+  All results saved to outputs/ablation_anchor_0.1/
+
+
+=================================================================
+  Sequential Persistent Curve Memory (Reprojection)
+  Views: 36  |  Window: 5  |  Anchor: 0.2
+=================================================================
+  GT scene: 30 curves, 8 control points each
+  36 viewpoints, 100 steps each
+  Initial CP drift: 0.2465
+  View   1/36  az=   0.0°  reproj=0.000443  CP_drift=0.2143  [win=1]  [2.0s]
+  View   2/36  az=  10.0°  reproj=0.000326  CP_drift=0.2058  [win=2]  [4.5s]
+  View   3/36  az=  20.0°  reproj=0.000263  CP_drift=0.1994  [win=3]  [7.9s]
+  View   4/36  az=  30.0°  reproj=0.000222  CP_drift=0.1936  [win=4]  [11.9s]
+  View   5/36  az=  40.0°  reproj=0.000193  CP_drift=0.1881  [win=5]  [16.9s]
+  View   6/36  az=  50.0°  reproj=0.000168  CP_drift=0.1830  [win=5]  [21.9s]
+  View   7/36  az=  60.0°  reproj=0.000151  CP_drift=0.1779  [win=5]  [26.9s]
+  View   8/36  az=  70.0°  reproj=0.000138  CP_drift=0.1729  [win=5]  [31.9s]
+  View   9/36  az=  80.0°  reproj=0.000129  CP_drift=0.1679  [win=5]  [36.9s]
+  View  10/36  az=  90.0°  reproj=0.000122  CP_drift=0.1631  [win=5]  [41.9s]
+  View  11/36  az= 100.0°  reproj=0.000116  CP_drift=0.1584  [win=5]  [46.9s]
+  View  12/36  az= 110.0°  reproj=0.000109  CP_drift=0.1539  [win=5]  [51.9s]
+  View  13/36  az= 120.0°  reproj=0.000103  CP_drift=0.1496  [win=5]  [56.9s]
+  View  14/36  az= 130.0°  reproj=0.000097  CP_drift=0.1456  [win=5]  [61.9s]
+  View  15/36  az= 140.0°  reproj=0.000091  CP_drift=0.1418  [win=5]  [66.9s]
+  View  16/36  az= 150.0°  reproj=0.000085  CP_drift=0.1382  [win=5]  [71.9s]
+  View  17/36  az= 160.0°  reproj=0.000078  CP_drift=0.1350  [win=5]  [76.9s]
+  View  18/36  az= 170.0°  reproj=0.000072  CP_drift=0.1320  [win=5]  [81.9s]
+  View  19/36  az= 180.0°  reproj=0.000066  CP_drift=0.1293  [win=5]  [86.9s]
+  View  20/36  az= 190.0°  reproj=0.000060  CP_drift=0.1268  [win=5]  [92.2s]
+  View  21/36  az= 200.0°  reproj=0.000055  CP_drift=0.1246  [win=5]  [98.2s]
+  View  22/36  az= 210.0°  reproj=0.000049  CP_drift=0.1227  [win=5]  [104.2s]
+  View  23/36  az= 220.0°  reproj=0.000045  CP_drift=0.1210  [win=5]  [110.2s]
+  View  24/36  az= 230.0°  reproj=0.000040  CP_drift=0.1195  [win=5]  [115.1s]
+  View  25/36  az= 240.0°  reproj=0.000036  CP_drift=0.1182  [win=5]  [120.5s]
+  View  26/36  az= 250.0°  reproj=0.000033  CP_drift=0.1170  [win=5]  [126.5s]
+  View  27/36  az= 260.0°  reproj=0.000030  CP_drift=0.1160  [win=5]  [132.5s]
+  View  28/36  az= 270.0°  reproj=0.000028  CP_drift=0.1151  [win=5]  [138.1s]
+  View  29/36  az= 280.0°  reproj=0.000026  CP_drift=0.1142  [win=5]  [143.0s]
+  View  30/36  az= 290.0°  reproj=0.000024  CP_drift=0.1135  [win=5]  [148.0s]
+  View  31/36  az= 300.0°  reproj=0.000024  CP_drift=0.1127  [win=5]  [153.0s]
+  View  32/36  az= 310.0°  reproj=0.000023  CP_drift=0.1121  [win=5]  [157.9s]
+  View  33/36  az= 320.0°  reproj=0.000023  CP_drift=0.1114  [win=5]  [162.9s]
+  View  34/36  az= 330.0°  reproj=0.000023  CP_drift=0.1108  [win=5]  [167.9s]
+  View  35/36  az= 340.0°  reproj=0.000024  CP_drift=0.1102  [win=5]  [172.7s]
+  View  36/36  az= 350.0°  reproj=0.000024  CP_drift=0.1097  [win=5]  [177.2s]
+
+  --- Revisitation Test ---
+  Azimuth     0°: reproj loss = 0.000027
+  Azimuth    90°: reproj loss = 0.000021
+  Azimuth   180°: reproj loss = 0.000028
+  Azimuth   270°: reproj loss = 0.000018
+
+  ============================================================
+  RESULTS (sequential, 36 views)
+  anchor_w=0.2, steps/view=100
+  ============================================================
+  CP drift:  0.2465 -> 0.1097  (+55.5%)
+  Curvature deviation:    1.744116
+  Avg revisit reproj:     0.000023
+  Total steps:            3600
+  Memory: STABLE (2nd half 0.1169 <= 1st half 0.1678)
+  Saved plot to outputs/ablation_anchor_0.2/sequential_optimization.png
+
+  All results saved to outputs/ablation_anchor_0.2/
+

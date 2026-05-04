@@ -13,3 +13,6 @@ outputs/quick_wCurly_v3/
 __pycache__/
 data/hairmodels
 logs/
+outputs/wm_10k_curly/
+outputs/wm_10k_straight/
+outputs/wm_10k_wavy/
