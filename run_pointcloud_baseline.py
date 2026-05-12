@@ -35,44 +35,8 @@ def log(msg):
     print(msg, flush=True)
 
 
-def orient_cp(cp):
-    """Yuksel Y-up -> PyTorch3D convention (x, z, -y)."""
-    out = cp.clone()
-    new_y = out[..., 2].clone()
-    new_z = -out[..., 1].clone()
-    out[..., 1] = new_y
-    out[..., 2] = new_z
-    return out
-
-
-def orient_pts(points):
-    out = points.clone()
-    new_y = out[..., 2].clone()
-    new_z = -out[..., 1].clone()
-    out[..., 1] = new_y
-    out[..., 2] = new_z
-    return out
-
-
-BLONDE = (0.82, 0.72, 0.42)
-
-
-def blonde_colors(num_points_per_curve_list, base=BLONDE):
-    """Generate blonde per-point colors with subtle strand variation."""
-    if isinstance(num_points_per_curve_list, torch.Tensor):
-        n, m, _ = num_points_per_curve_list.shape
-        counts = [m] * n
-    else:
-        counts = num_points_per_curve_list
-    rng = np.random.RandomState(42)
-    cols = []
-    for m in counts:
-        jitter = rng.uniform(-0.06, 0.06, size=3)
-        strand_color = np.clip(np.array(base) + jitter, 0, 1)
-        t = np.linspace(0, 1, m)
-        darken = 1.0 - 0.15 * t
-        cols.append(np.outer(darken, strand_color))
-    return torch.tensor(np.concatenate(cols), dtype=torch.float32)
+from coordinates import orient_cp, orient_pts
+from render_utils import BLONDE, blonde_colors
 
 
 def render_pts(points, colors, az, image_size, radius, device, elev=25.0, dist=3.5):
@@ -182,16 +146,7 @@ def anchor_proximity_loss_points(pred_points, anchor_points, weight):
     return weight * (pred_points - anchor_points.detach()).norm(dim=-1).mean()
 
 
-class PersistentPointMemory:
-    def __init__(self, initial_points, ema_decay):
-        self.anchor = initial_points.clone().detach()
-        self.ema_decay = ema_decay
-
-    def update(self, new_points):
-        self.anchor = self.ema_decay * self.anchor + (1.0 - self.ema_decay) * new_points.detach()
-
-    def get_anchor(self):
-        return self.anchor.clone()
+from memory import PersistentPointMemory
 
 
 def paired_point_drift(gt_points, pred_points):

@@ -40,23 +40,21 @@ from optimize_v2 import (
     multi_view_reprojection_loss,
     tangent_consistency_loss,
     anchor_proximity_loss,
-    PersistentCurveMemory,
 )
 from renderer import render_point_cloud
 from spline import SplineField, evaluate_bspline
 
+from coordinates import orient_cp
+from memory import PersistentCurveMemory, PersistentPointMemory, PersistentGaussianMemory
+
 # Reuse rendering helpers (safe import; does not run run_dense main)
 from run_dense import (
-    orient_cp,
     blonde_colors,
     render_pts,
     render_cp_blonde,
     render_dense_gt_blonde,
 )
-from run_gaussian_splat_baseline import (
-    gaussian_splat_render,
-    PersistentGaussianMemory,
-)
+from run_gaussian_splat_baseline import gaussian_splat_render
 
 
 def log(msg: str) -> None:
@@ -132,18 +130,6 @@ def multi_view_reprojection_loss_points(pred_points, gt_projections, cameras, im
 
 def anchor_proximity_loss_points(pred_points, anchor_points, weight):
     return weight * (pred_points - anchor_points.detach()).norm(dim=-1).mean()
-
-
-class PersistentPointMemory:
-    def __init__(self, initial_points, ema_decay):
-        self.anchor = initial_points.clone().detach()
-        self.ema_decay = ema_decay
-
-    def update(self, new_points):
-        self.anchor = self.ema_decay * self.anchor + (1.0 - self.ema_decay) * new_points.detach()
-
-    def get_anchor(self):
-        return self.anchor.clone()
 
 
 def optimize_spline_trajectory(gt_cp: torch.Tensor, traj_azs: list[float], args, device: str):

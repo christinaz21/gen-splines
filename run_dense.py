@@ -10,32 +10,10 @@ from hair_loader import download_yuksel_hair, load_hair_file, hair_to_spline_fie
 from metrics import control_point_drift
 from optimize_v2 import (multi_view_reprojection_loss, tangent_consistency_loss,
                           anchor_proximity_loss, PersistentCurveMemory)
+from coordinates import orient_cp, orient_pts
+from render_utils import BLONDE, blonde_colors
 
 def log(msg): print(msg, flush=True)
-
-BLONDE = (0.82, 0.72, 0.42)
-
-# === Orientation: Yuksel Y-up -> PyTorch3D (x, z, -y) ===
-def orient_cp(cp):
-    f=cp.clone(); ny=f[...,2].clone(); nz=-f[...,1].clone(); f[...,1]=ny; f[...,2]=nz; return f
-def orient_pts(p):
-    f=p.clone(); ny=f[:,2].clone(); nz=-f[:,1].clone(); f[:,1]=ny; f[:,2]=nz; return f
-
-# === Coloring (blonde with per-strand variation + root-to-tip gradient) ===
-def blonde_colors(num_points_per_curve_list, base=BLONDE):
-    """Generate blonde colors. Accepts list of point counts or (N,M,3) tensor."""
-    if isinstance(num_points_per_curve_list, torch.Tensor):
-        N,M,_ = num_points_per_curve_list.shape
-        counts = [M]*N
-    else:
-        counts = num_points_per_curve_list
-    rng=np.random.RandomState(42); cs=[]
-    for M in counts:
-        v=rng.uniform(-0.06,0.06,size=3)
-        sc=np.clip(np.array(base)+v, 0, 1)
-        t=np.linspace(0,1,M); darken=1.0-0.15*t
-        cs.append(np.outer(darken, sc))
-    return torch.tensor(np.concatenate(cs), dtype=torch.float32)
 
 # === Rendering (all bin_size=0) ===
 def render_pts(points, colors, az, image_size, radius, device, elev=25.0, dist=3.5):

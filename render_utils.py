@@ -120,6 +120,29 @@ def make_point_colors(num_points, seed=42, color_type="hair"):
     return torch.tensor(np.clip(base + j, 0.05, 1), dtype=torch.float32)
 
 
+BLONDE = (0.82, 0.72, 0.42)
+
+
+def blonde_colors(num_points_per_curve_list, base=BLONDE):
+    """Per-point blonde colors with subtle strand variation and root-to-tip
+    darkening. Accepts either a list of per-curve point counts or a (N, M, 3)
+    tensor (uses its second dim as the uniform point count)."""
+    if isinstance(num_points_per_curve_list, torch.Tensor):
+        n, m, _ = num_points_per_curve_list.shape
+        counts = [m] * n
+    else:
+        counts = num_points_per_curve_list
+    rng = np.random.RandomState(42)
+    cols = []
+    for m in counts:
+        jitter = rng.uniform(-0.06, 0.06, size=3)
+        strand_color = np.clip(np.array(base) + jitter, 0, 1)
+        t = np.linspace(0, 1, m)
+        darken = 1.0 - 0.15 * t
+        cols.append(np.outer(darken, strand_color))
+    return torch.tensor(np.concatenate(cols), dtype=torch.float32)
+
+
 # ── Renderers ─────────────────────────────────────────────────
 
 BG = (0.13, 0.13, 0.17)

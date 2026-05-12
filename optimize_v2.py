@@ -127,44 +127,10 @@ def anchor_proximity_loss(pred_cp, anchor_cp, weight=0.01):
 
 
 # =========================================================================
-# Enhanced persistent memory with EMA anchors
+# Persistent memory with EMA anchors — re-exported for back-compat
 # =========================================================================
 
-class PersistentCurveMemory:
-    """
-    Manages the persistent curve memory with EMA (exponential moving average)
-    anchor updates instead of hard replacement.
-
-    v1 problem: After optimizing at view t, we set anchor = optimized_cp.
-    This means early noisy estimates propagate forward.
-
-    v2 solution: anchor = alpha * optimized_cp + (1-alpha) * old_anchor
-    This smooths the memory updates and prevents single-view noise from
-    corrupting the anchor.
-    """
-
-    def __init__(self, initial_cp: torch.Tensor, ema_decay: float = 0.7):
-        """
-        Args:
-            initial_cp: (N, K, 3) initial control points
-            ema_decay: weight for old anchor (0.7 = 70% old, 30% new)
-        """
-        self.anchor = initial_cp.clone().detach()
-        self.ema_decay = ema_decay
-        self.update_count = 0
-        self.history = [initial_cp.clone().cpu()]
-
-    def update(self, new_cp: torch.Tensor):
-        """Update anchor with EMA blending."""
-        self.anchor = (
-            self.ema_decay * self.anchor +
-            (1 - self.ema_decay) * new_cp.detach()
-        )
-        self.update_count += 1
-        self.history.append(new_cp.clone().cpu())
-
-    def get_anchor(self) -> torch.Tensor:
-        return self.anchor.clone()
+from memory import PersistentCurveMemory
 
 
 # =========================================================================

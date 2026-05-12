@@ -20,19 +20,11 @@ import torch.nn.functional as F
 
 from hair_loader import download_yuksel_hair, load_hair_file, hair_to_spline_field
 from spline import evaluate_bspline
+from coordinates import orient_cp
 
 
 def log(msg):
     print(msg, flush=True)
-
-
-def orient_cp(cp):
-    out = cp.clone()
-    new_y = out[..., 2].clone()
-    new_z = -out[..., 1].clone()
-    out[..., 1] = new_y
-    out[..., 2] = new_z
-    return out
 
 
 def gaussian_splat_render(
@@ -138,16 +130,7 @@ def chamfer_distance_symmetric(a, b):
     return dists.min(dim=1).values.mean() + dists.min(dim=0).values.mean()
 
 
-class PersistentGaussianMemory:
-    def __init__(self, initial_points, ema_decay):
-        self.anchor = initial_points.clone().detach()
-        self.ema_decay = ema_decay
-
-    def update(self, new_points):
-        self.anchor = self.ema_decay * self.anchor + (1.0 - self.ema_decay) * new_points.detach()
-
-    def get_anchor(self):
-        return self.anchor.clone()
+from memory import PersistentGaussianMemory
 
 
 def build_gt_assets(gt_points, azimuths, args, device):

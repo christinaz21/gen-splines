@@ -37,16 +37,11 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
+from coordinates import orient_pts as orient
+
 
 def log(msg):
     print(msg, flush=True)
-
-
-def orient(pts):
-    out = pts.clone()
-    ny, nz = out[..., 2].clone(), -out[..., 1].clone()
-    out[..., 1], out[..., 2] = ny, nz
-    return out
 
 
 def hair_colors(n, seed=42):
@@ -253,17 +248,7 @@ def render_for_loss(points, az, config, device):
 # Core: Persistent Memory with Predict-Observe-Update loop
 # ══════════════════════════════════════════════════════════════
 
-class PersistentMemory:
-    """Base class for persistent 3D memory."""
-    def __init__(self, params, ema_decay=0.8):
-        self.anchor = params.clone().detach()
-        self.ema_decay = ema_decay
-
-    def update_anchor(self, new_params):
-        self.anchor = self.ema_decay * self.anchor + (1 - self.ema_decay) * new_params.detach()
-
-    def get_anchor(self):
-        return self.anchor
+from memory import PersistentCurveMemory, PersistentPointMemory
 
 
 def explore_phase(gt_cp, gt_points, args):
@@ -315,7 +300,7 @@ def explore_phase(gt_cp, gt_points, args):
     # ── SPLINE MEMORY ──
     log("\n  === SPLINE MEMORY (exploration) ===")
     sp_pred_cp = nn.Parameter(gt_cp.clone() + args.init_noise * torch.randn_like(gt_cp))
-    sp_memory = PersistentMemory(sp_pred_cp.data, args.ema_decay)
+    sp_memory = PersistentCurveMemory(sp_pred_cp.data, args.ema_decay)
 
     sp_history = {
         "predictions": [],   # rendered BEFORE update (world model output)
@@ -418,7 +403,7 @@ def explore_phase(gt_cp, gt_points, args):
                     )
 
         # STEP 3: STABILIZE
-        sp_memory.update_anchor(sp_pred_cp.data)
+        sp_memory.update(sp_pred_cp.data)
 
         with torch.no_grad():
             drift = (gt_cp - sp_pred_cp.data).norm(dim=-1).mean().item()
@@ -437,7 +422,7 @@ def explore_phase(gt_cp, gt_points, args):
     # ── POINT CLOUD MEMORY ──
     log("\n  === POINT CLOUD MEMORY (exploration) ===")
     pc_pred = nn.Parameter(gt_points.clone() + args.init_noise * torch.randn_like(gt_points))
-    pc_memory = PersistentMemory(pc_pred.data, args.ema_decay)
+    pc_memory = PersistentPointMemory(pc_pred.data, args.ema_decay)
 
     pc_history = {
         "predictions": [],
@@ -487,7 +472,7 @@ def explore_phase(gt_cp, gt_points, args):
             loss.backward()
             optimizer.step()
 
-        pc_memory.update_anchor(pc_pred.data)
+        pc_memory.update(pc_pred.data)
 
         with torch.no_grad():
             drift = (gt_points - pc_pred.data).norm(dim=-1).mean().item()
