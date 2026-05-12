@@ -2,354 +2,331 @@
 <html>
 <head>
 <meta charset="utf-8">
-<title>Persistent Curve Memory — Live Viewer</title>
+<title>Persistent Curve Memory — Viewer</title>
 <style>
-* { margin:0; padding:0; box-sizing:border-box; }
-body { background:#0d0d15; color:#ccc; font-family:'JetBrains Mono','SF Mono',monospace; overflow:hidden; }
-#ui { position:fixed; top:0; left:0; right:0; z-index:10; background:#0f0f1aee;
-      border-bottom:1px solid #252535; padding:10px 16px; display:flex;
-      align-items:center; gap:14px; backdrop-filter:blur(8px); }
-#ui h1 { font-size:14px; color:#88ccff; font-weight:700; white-space:nowrap; }
-.btn { padding:5px 12px; border:1px solid #333; background:transparent; color:#888;
-       border-radius:4px; cursor:pointer; font-size:11px; font-family:inherit; }
-.btn:hover { border-color:#666; color:#ccc; }
-.btn.active { border-color:#88ccff; color:#aaddff; background:#88ccff18; }
-.btn.active-r { border-color:#ff6666; color:#ff9999; background:#ff666618; }
-label { font-size:11px; color:#666; display:flex; align-items:center; gap:6px; }
-input[type=file] { display:none; }
-.file-btn { padding:4px 10px; border:1px dashed #444; border-radius:4px;
-            cursor:pointer; font-size:10px; color:#888; }
-.file-btn:hover { border-color:#88ccff; color:#88ccff; }
-#stats { position:fixed; bottom:14px; left:14px; background:#0d0d15dd;
-         border:1px solid #252535; border-radius:8px; padding:10px 14px;
-         font-size:10px; line-height:1.7; z-index:10; min-width:240px; }
-#hint { position:fixed; bottom:14px; right:14px; background:#0d0d15dd;
-        border:1px solid #252535; border-radius:8px; padding:8px 12px;
-        font-size:10px; color:#555; z-index:10; }
-canvas { display:block; width:100vw; height:100vh; }
-#labels { position:fixed; top:60px; left:0; right:0; display:flex;
-          justify-content:space-around; z-index:10; pointer-events:none; }
-.label { font-size:16px; font-weight:700; text-shadow:0 2px 8px #000; }
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0d0d15;color:#ccc;font-family:'JetBrains Mono','SF Mono',monospace;overflow:hidden}
+#ui{position:fixed;top:0;left:0;right:0;z-index:10;background:#0f0f1aee;
+border-bottom:1px solid #252535;padding:8px 14px;display:flex;align-items:center;gap:7px;backdrop-filter:blur(8px);flex-wrap:wrap}
+#ui h1{font-size:13px;color:#88ccff;font-weight:700;white-space:nowrap}
+.btn{padding:5px 10px;border:1px solid #333;background:transparent;color:#777;
+border-radius:4px;cursor:pointer;font-size:10px;font-family:inherit;transition:all 0.15s}
+.btn:hover{border-color:#666;color:#ccc}
+.btn.a{border-color:#88ccff;color:#aaddff;background:#88ccff18}
+.btn.ar{border-color:#ff6666;color:#ff9999;background:#ff666618}
+.btn.ag{border-color:#66ff88;color:#88ffaa;background:#66ff8818}
+.sep{width:1px;height:18px;background:#333;margin:0 2px}
+input[type=file]{display:none}
+.fb{padding:3px 7px;border:1px dashed #444;border-radius:3px;cursor:pointer;font-size:9px;color:#777;display:inline-block}
+.fb:hover{border-color:#88ccff;color:#88ccff}
+.fs{color:#444;font-size:8px;margin-left:2px}
+#stats{position:fixed;bottom:12px;left:12px;background:#0d0d15dd;border:1px solid #252535;
+border-radius:6px;padding:8px 12px;font-size:9.5px;line-height:1.7;z-index:10;min-width:200px}
+#hint{position:fixed;bottom:12px;right:12px;background:#0d0d15dd;border:1px solid #252535;
+border-radius:6px;padding:6px 10px;font-size:9px;color:#444;z-index:10}
+canvas{display:block;width:100vw;height:100vh}
 </style>
 </head>
 <body>
-
 <div id="ui">
   <h1>Persistent Curve Memory</h1>
-  <button class="btn active" onclick="setMode('compare')" id="btn-compare">Compare</button>
+  <span class="sep"></span>
+  <button class="btn a" onclick="setMode('all')" id="btn-all">All Three</button>
+  <button class="btn" onclick="setMode('compare')" id="btn-compare">Spline vs Points</button>
+  <button class="btn" onclick="setMode('gtsp')" id="btn-gtsp">GT vs Spline</button>
+  <button class="btn" onclick="setMode('gt')" id="btn-gt">GT</button>
   <button class="btn" onclick="setMode('spline')" id="btn-spline">Splines</button>
   <button class="btn" onclick="setMode('points')" id="btn-points">Points</button>
-  <span style="width:1px;height:20px;background:#333;margin:0 4px"></span>
-  <label>
-    <span class="file-btn" onclick="document.getElementById('obj-input').click()">
-      Load Spline .OBJ
-    </span>
-    <input type="file" id="obj-input" accept=".obj" onchange="loadOBJ(this.files[0])">
-    <span id="obj-status" style="color:#555;font-size:9px"></span>
-  </label>
-  <label>
-    <span class="file-btn" onclick="document.getElementById('ply-input').click()">
-      Load Point .PLY
-    </span>
-    <input type="file" id="ply-input" accept=".ply" onchange="loadPLY(this.files[0])">
-    <span id="ply-status" style="color:#555;font-size:9px"></span>
-  </label>
+  <span class="sep"></span>
+  <span class="fb" onclick="document.getElementById('fi-gt').click()">Load GT</span>
+  <input type="file" id="fi-gt" accept="*" onchange="loadAsMesh(this.files[0],'gt')">
+  <span class="fs" id="fs-gt"></span>
+  <span class="fb" onclick="document.getElementById('fi-sp').click()">Load Spline</span>
+  <input type="file" id="fi-sp" accept="*" onchange="loadAsMesh(this.files[0],'spline')">
+  <span class="fs" id="fs-sp"></span>
+  <span class="fb" onclick="document.getElementById('fi-pc').click()">Load Points</span>
+  <input type="file" id="fi-pc" accept="*" onchange="loadAsPoints(this.files[0])">
+  <span class="fs" id="fs-pc"></span>
+  <span class="fb" onclick="document.getElementById('fi-all').click()" style="border-color:#666;color:#aaa">Load All 3</span>
+  <input type="file" id="fi-all" accept="*" multiple onchange="loadAll(this.files)">
   <span style="flex:1"></span>
-  <span id="mode-label" style="color:#ffffff66;font-size:12px">Side-by-Side</span>
+  <span id="ml" style="color:#ffffff44;font-size:10px"></span>
 </div>
-
-<div id="labels">
-  <span class="label" style="color:#88ccff" id="lbl-left">Spline Curves (tubes)</span>
-  <span class="label" style="color:#ff9999" id="lbl-right">Point Cloud (dots)</span>
-</div>
-
 <div id="stats">
-  <div style="color:#aaa;font-weight:700;margin-bottom:2px">Loaded Data</div>
-  <div id="stat-spline"><span style="color:#88ccff">Spline:</span> no data loaded</div>
-  <div id="stat-points"><span style="color:#ff9999">Points:</span> no data loaded</div>
-  <div id="stat-note" style="margin-top:4px;color:#555">Load .OBJ and .PLY from export</div>
+  <div style="color:#aaa;font-weight:700;margin-bottom:2px">Scene</div>
+  <div id="s-gt"><span style="color:#66ff88">GT:</span> —</div>
+  <div id="s-sp"><span style="color:#88ccff">Spline:</span> —</div>
+  <div id="s-pc"><span style="color:#ff9999">Points:</span> —</div>
 </div>
-
-<div id="hint">Drag to rotate · Scroll to zoom</div>
-
+<div id="hint">Drag rotate · Scroll zoom</div>
 <canvas id="c"></canvas>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
-// ── Setup ────────────────────────────────────────────────────
-const canvas = document.getElementById('c');
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.2;
+const C=document.getElementById('c');
+const R=new THREE.WebGLRenderer({canvas:C,antialias:true});
+R.setSize(innerWidth,innerHeight);R.setPixelRatio(Math.min(devicePixelRatio,2));
+R.toneMapping=THREE.ACESFilmicToneMapping;R.toneMappingExposure=1.2;
+const S=new THREE.Scene();S.background=new THREE.Color(0x141420);
+const cam=new THREE.PerspectiveCamera(45,innerWidth/innerHeight,0.01,100);
 
-const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x141420);
+S.add(new THREE.AmbientLight(0xffeedd,0.55));
+[[[3,5,4],0xfff5e0,1.0],[[-3,4,-2],0xe0e8ff,0.3],[[0,-2,5],0xffd0a0,0.2]].forEach(([p,c,i])=>{
+  const l=new THREE.DirectionalLight(c,i);l.position.set(...p);S.add(l)});
 
-const camera = new THREE.PerspectiveCamera(45, innerWidth/innerHeight, 0.01, 100);
+const gGT=new THREE.Group(),gSP=new THREE.Group(),gPC=new THREE.Group();
+S.add(gGT);S.add(gSP);S.add(gPC);
 
-// Lighting
-scene.add(new THREE.AmbientLight(0xffeedd, 0.6));
-const keyLight = new THREE.DirectionalLight(0xfff5e0, 1.0);
-keyLight.position.set(4, 6, 3); scene.add(keyLight);
-const fillLight = new THREE.DirectionalLight(0xe0e8ff, 0.3);
-fillLight.position.set(-3, 4, -2); scene.add(fillLight);
-const rimLight = new THREE.DirectionalLight(0xffd0a0, 0.2);
-rimLight.position.set(0, -2, 5); scene.add(rimLight);
+// Labels
+function makeLabel(text,color){
+  const cv=document.createElement('canvas');cv.width=512;cv.height=72;
+  const x=cv.getContext('2d');x.clearRect(0,0,512,72);
+  x.fillStyle=color;x.font='bold 40px JetBrains Mono,SF Mono,monospace';
+  x.textAlign='center';x.textBaseline='middle';
+  x.shadowColor='#000';x.shadowBlur=8;x.fillText(text,256,36);
+  const t=new THREE.CanvasTexture(cv);t.needsUpdate=true;
+  const m=new THREE.SpriteMaterial({map:t,transparent:true,depthTest:false});
+  const s=new THREE.Sprite(m);s.scale.set(1.2,0.17,1);s.position.set(0,1.15,0);return s}
+const lblGT=makeLabel('Ground Truth','#66ff88');
+const lblSP=makeLabel('Spline Memory','#88ccff');
+const lblPC=makeLabel('Point Cloud','#ff9999');
+gGT.add(lblGT);gSP.add(lblSP);gPC.add(lblPC);
 
-// Groups
-const splineGroup = new THREE.Group();
-const pointGroup = new THREE.Group();
-scene.add(splineGroup);
-scene.add(pointGroup);
+let mode='all';
 
-let mode = 'compare';
-let splineLoaded = false, pointLoaded = false;
-
-// ── Camera controls ──────────────────────────────────────────
-let drag = false, px = 0, py = 0;
-let theta = 0.7, phi = 0.55, radius = 3.0;
-
-function updateCam() {
-  camera.position.set(
-    radius * Math.sin(phi) * Math.cos(theta),
-    radius * Math.cos(phi),
-    radius * Math.sin(phi) * Math.sin(theta)
-  );
-  camera.lookAt(0, -0.1, 0);
-}
-updateCam();
-
-canvas.addEventListener('mousedown', e => { drag=true; px=e.clientX; py=e.clientY; });
-canvas.addEventListener('mouseup', () => drag=false);
-canvas.addEventListener('mouseleave', () => drag=false);
-canvas.addEventListener('mousemove', e => {
-  if (!drag) return;
-  theta += (e.clientX-px)*0.005; 
-  phi = Math.max(0.15, Math.min(2.6, phi+(e.clientY-py)*0.005));
-  px=e.clientX; py=e.clientY; updateCam();
-});
-canvas.addEventListener('wheel', e => {
-  e.preventDefault();
-  radius = Math.max(0.4, Math.min(8, radius+e.deltaY*0.003));
-  updateCam();
-}, {passive:false});
-
-// Touch
+// Camera
+let dr=false,px=0,py=0,th=0.7,ph=0.55,rd=3.0;
+function uc(){cam.position.set(rd*Math.sin(ph)*Math.cos(th),rd*Math.cos(ph),rd*Math.sin(ph)*Math.sin(th));cam.lookAt(0,-0.1,0)}
+uc();
+C.addEventListener('mousedown',e=>{dr=true;px=e.clientX;py=e.clientY});
+C.addEventListener('mouseup',()=>dr=false);C.addEventListener('mouseleave',()=>dr=false);
+C.addEventListener('mousemove',e=>{if(!dr)return;th+=(e.clientX-px)*0.005;ph=Math.max(0.15,Math.min(2.6,ph+(e.clientY-py)*0.005));px=e.clientX;py=e.clientY;uc()});
+C.addEventListener('wheel',e=>{e.preventDefault();rd=Math.max(0.3,Math.min(10,rd+e.deltaY*0.003));uc()},{passive:false});
 let td=0;
-canvas.addEventListener('touchstart', e => {
-  if(e.touches.length===1){drag=true;px=e.touches[0].clientX;py=e.touches[0].clientY;}
-  else if(e.touches.length===2){const dx=e.touches[0].clientX-e.touches[1].clientX,dy=e.touches[0].clientY-e.touches[1].clientY;td=Math.sqrt(dx*dx+dy*dy);}
-}, {passive:false});
-canvas.addEventListener('touchmove', e => {
-  e.preventDefault();
-  if(e.touches.length===1&&drag){theta+=(e.touches[0].clientX-px)*0.005;phi=Math.max(0.15,Math.min(2.6,phi+(e.touches[0].clientY-py)*0.005));px=e.touches[0].clientX;py=e.touches[0].clientY;updateCam();}
-  else if(e.touches.length===2){const dx=e.touches[0].clientX-e.touches[1].clientX,dy=e.touches[0].clientY-e.touches[1].clientY,d=Math.sqrt(dx*dx+dy*dy);radius=Math.max(0.4,Math.min(8,radius*(td/d)));td=d;updateCam();}
-}, {passive:false});
-canvas.addEventListener('touchend', ()=>drag=false);
+C.addEventListener('touchstart',e=>{if(e.touches.length===1){dr=true;px=e.touches[0].clientX;py=e.touches[0].clientY}else if(e.touches.length===2){const a=e.touches[0].clientX-e.touches[1].clientX,b=e.touches[0].clientY-e.touches[1].clientY;td=Math.sqrt(a*a+b*b)}},{passive:false});
+C.addEventListener('touchmove',e=>{e.preventDefault();if(e.touches.length===1&&dr){th+=(e.touches[0].clientX-px)*0.005;ph=Math.max(0.15,Math.min(2.6,ph+(e.touches[0].clientY-py)*0.005));px=e.touches[0].clientX;py=e.touches[0].clientY;uc()}else if(e.touches.length===2){const a=e.touches[0].clientX-e.touches[1].clientX,b=e.touches[0].clientY-e.touches[1].clientY,d=Math.sqrt(a*a+b*b);rd=Math.max(0.3,Math.min(10,rd*(td/d)));td=d;uc()}},{passive:false});
+C.addEventListener('touchend',()=>dr=false);
 
-// ── Mode switching ───────────────────────────────────────────
-function setMode(m) {
-  mode = m;
-  document.querySelectorAll('#ui .btn').forEach(b => { b.classList.remove('active','active-r'); });
-  document.getElementById('btn-'+m).classList.add(m==='points'?'active-r':'active');
-  
-  splineGroup.visible = m==='compare'||m==='spline';
-  pointGroup.visible = m==='compare'||m==='points';
-  
-  if (m==='compare') {
-    splineGroup.position.x = -0.65; pointGroup.position.x = 0.65;
-    document.getElementById('lbl-left').style.display='';
-    document.getElementById('lbl-right').style.display='';
-  } else {
-    splineGroup.position.x = 0; pointGroup.position.x = 0;
-    document.getElementById('lbl-left').style.display = m==='spline'?'':'none';
-    document.getElementById('lbl-right').style.display = m==='points'?'':'none';
-  }
-  document.getElementById('mode-label').textContent = 
-    {compare:'Side-by-Side',spline:'Splines Only',points:'Points Only'}[m];
-}
+function setMode(m){
+  mode=m;
+  document.querySelectorAll('#ui .btn').forEach(b=>b.classList.remove('a','ar','ag'));
+  const el=document.getElementById('btn-'+m);
+  if(el)el.classList.add(m==='points'?'ar':m==='gt'?'ag':'a');
+  gGT.visible=['all','gt','gtsp'].includes(m);
+  gSP.visible=['all','compare','spline','gtsp'].includes(m);
+  gPC.visible=['all','compare','points'].includes(m);
+  lblGT.visible=gGT.visible;lblSP.visible=gSP.visible;lblPC.visible=gPC.visible;
+  if(['gt','spline','points'].includes(m)){lblGT.visible=false;lblSP.visible=false;lblPC.visible=false}
+  if(m==='all'){gGT.position.x=-1.1;gSP.position.x=0;gPC.position.x=1.1}
+  else if(m==='compare'){gGT.position.x=0;gSP.position.x=-0.65;gPC.position.x=0.65}
+  else if(m==='gtsp'){gGT.position.x=-0.65;gSP.position.x=0.65;gPC.position.x=0}
+  else{gGT.position.x=0;gSP.position.x=0;gPC.position.x=0}
+  const L={all:'GT | Spline | Points',compare:'Spline vs Points',
+    gtsp:'GT vs Spline',gt:'Ground Truth',spline:'Spline Curves',points:'Point Cloud'};
+  document.getElementById('ml').textContent=L[m]||''}
 
-// ── OBJ parser (with vertex colors) ─────────────────────────
-function parseOBJ(text) {
-  const verts = [], colors = [], faces = [];
-  for (const line of text.split('\n')) {
-    const parts = line.trim().split(/\s+/);
-    if (parts[0] === 'v' && parts.length >= 4) {
-      verts.push(parseFloat(parts[1]), parseFloat(parts[2]), parseFloat(parts[3]));
-      if (parts.length >= 7) {
-        colors.push(parseFloat(parts[4]), parseFloat(parts[5]), parseFloat(parts[6]));
-      } else {
-        colors.push(0.7, 0.6, 0.4);
-      }
-    } else if (parts[0] === 'f') {
-      // Handle f v1 v2 v3 (1-indexed)
-      const idx = parts.slice(1).map(p => parseInt(p.split('/')[0]) - 1);
-      if (idx.length >= 3) faces.push(idx[0], idx[1], idx[2]);
-    }
-  }
-  return { verts: new Float32Array(verts), colors: new Float32Array(colors),
-           faces: new Uint32Array(faces) };
-}
+// ── OBJ parser: scans ENTIRE file for v and f lines ─────────
+function parseOBJ(text){
+  const v=[],c=[],f=[];
+  const lines=text.split('\n');
+  for(let i=0;i<lines.length;i++){
+    const p=lines[i].trim().split(/\s+/);
+    if(p[0]==='v'&&p.length>=4){
+      v.push(+p[1],+p[2],+p[3]);
+      c.push(p.length>=7?+p[4]:0.7,p.length>=7?+p[5]:0.6,p.length>=7?+p[6]:0.4)}
+    else if(p[0]==='f'){
+      const idx=p.slice(1).map(x=>parseInt(x.split('/')[0])-1);
+      if(idx.length>=3)f.push(idx[0],idx[1],idx[2])}}
+  return{v:new Float32Array(v),c:new Float32Array(c),f:new Uint32Array(f)}}
 
 // ── PLY parser ───────────────────────────────────────────────
-function parsePLY(text) {
-  const lines = text.split('\n');
-  let nVerts = 0, headerEnd = 0;
-  for (let i = 0; i < lines.length; i++) {
-    if (lines[i].startsWith('element vertex')) nVerts = parseInt(lines[i].split(' ')[2]);
-    if (lines[i].trim() === 'end_header') { headerEnd = i + 1; break; }
-  }
-  const verts = [], colors = [];
-  for (let i = headerEnd; i < headerEnd + nVerts && i < lines.length; i++) {
-    const p = lines[i].trim().split(/\s+/);
-    if (p.length >= 3) {
-      verts.push(parseFloat(p[0]), parseFloat(p[1]), parseFloat(p[2]));
-      if (p.length >= 6) {
-        colors.push(parseFloat(p[3])/255, parseFloat(p[4])/255, parseFloat(p[5])/255);
-      } else {
-        colors.push(0.7, 0.5, 0.3);
-      }
-    }
-  }
-  return { verts: new Float32Array(verts), colors: new Float32Array(colors) };
-}
+function parsePLY(text){
+  const ls=text.split('\n');let nV=0,h=0;
+  for(let i=0;i<ls.length;i++){
+    if(ls[i].startsWith('element vertex'))nV=parseInt(ls[i].split(' ')[2]);
+    if(ls[i].trim()==='end_header'){h=i+1;break}}
+  const v=[],c=[];
+  for(let i=h;i<h+nV&&i<ls.length;i++){
+    const p=ls[i].trim().split(/\s+/);
+    if(p.length>=3){v.push(+p[0],+p[1],+p[2]);
+    c.push(p.length>=6?+p[3]/255:0.7,p.length>=6?+p[4]/255:0.5,p.length>=6?+p[5]/255:0.3)}}
+  return{v:new Float32Array(v),c:new Float32Array(c)}}
 
-// ── File loading ─────────────────────────────────────────────
-function loadOBJ(file) {
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    const data = parseOBJ(e.target.result);
-    
-    // Clear old
-    while (splineGroup.children.length) splineGroup.remove(splineGroup.children[0]);
-    
-    const geo = new THREE.BufferGeometry();
-    geo.setAttribute('position', new THREE.BufferAttribute(data.verts, 3));
-    geo.setAttribute('color', new THREE.BufferAttribute(data.colors, 3));
-    geo.setIndex(new THREE.BufferAttribute(data.faces, 1));
+// ── Clear group but keep the label sprite ────────────────────
+function clearGroup(g){
+  const kids=[...g.children];
+  kids.forEach(ch=>{if(!ch.isSprite)g.remove(ch)})}
+
+// ── MESH loader: for GT and Spline (ALWAYS renders as lit tubes) ──
+function loadAsMesh(file, target){
+  if(!file)return;
+  const group=target==='gt'?gGT:gSP;
+  const reader=new FileReader();
+  reader.onload=function(e){
+    const text=e.target.result;
+    // Parse as OBJ regardless of extension
+    const d=parseOBJ(text);
+    clearGroup(group);
+    const geo=new THREE.BufferGeometry();
+    geo.setAttribute('position',new THREE.BufferAttribute(d.v,3));
+    geo.setAttribute('color',new THREE.BufferAttribute(d.c,3));
+    if(d.f.length>0){
+      geo.setIndex(new THREE.BufferAttribute(d.f,1));
+      geo.computeVertexNormals();
+      group.add(new THREE.Mesh(geo,new THREE.MeshStandardMaterial({
+        vertexColors:true,roughness:0.5,metalness:0.03,side:THREE.DoubleSide})))}
+    else{
+      // Fallback: if no faces found, render as dense point cloud
+      group.add(new THREE.Points(geo,new THREE.PointsMaterial({
+        size:0.004,vertexColors:true,sizeAttenuation:true,transparent:true,opacity:0.9})))}
+    const nV=d.v.length/3,nF=d.f.length/3;
+    const col=target==='gt'?'#66ff88':'#88ccff';
+    const lab=target==='gt'?'GT':'Spline';
+    document.getElementById('fs-'+(target==='gt'?'gt':'sp')).textContent=
+      nF>0?nV.toLocaleString()+'v':nV.toLocaleString()+'p';
+    document.getElementById('s-'+(target==='gt'?'gt':'sp')).innerHTML=
+      `<span style="color:${col}">${lab}:</span> `+(nF>0?
+      `${nV.toLocaleString()} verts, ${nF.toLocaleString()} faces`:
+      `${nV.toLocaleString()} points`);
+    setMode(mode)};
+  reader.readAsText(file)}
+
+// ── POINTS loader: for Point Cloud (ALWAYS renders as dots) ──
+function loadAsPoints(file){
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=function(e){
+    const text=e.target.result;
+    let d;
+    // Detect PLY vs OBJ
+    if(text.trimStart().startsWith('ply')){d=parsePLY(text)}
+    else{const obj=parseOBJ(text);d={v:obj.v,c:obj.c}}
+    clearGroup(gPC);
+    const geo=new THREE.BufferGeometry();
+    geo.setAttribute('position',new THREE.BufferAttribute(d.v,3));
+    geo.setAttribute('color',new THREE.BufferAttribute(d.c,3));
+    gPC.add(new THREE.Points(geo,new THREE.PointsMaterial({
+      size:0.008,vertexColors:true,sizeAttenuation:true,transparent:true,opacity:0.9})));
+    const n=d.v.length/3;
+    document.getElementById('fs-pc').textContent=n.toLocaleString()+'p';
+    document.getElementById('s-pc').innerHTML=
+      `<span style="color:#ff9999">Points:</span> ${n.toLocaleString()} points`;
+    setMode(mode)};
+  reader.readAsText(file)}
+
+// ── Load All 3: assigns by filename, loads sequentially ──────
+function loadAll(files){
+  if(!files||files.length===0)return;
+  const list=Array.from(files);
+
+  // Sort into buckets by filename
+  let gtFile=null,spFile=null,pcFile=null;
+
+  for(const f of list){
+    const n=f.name.toLowerCase();
+    if(n.includes('.ply')){pcFile=f}
+    else if(n.includes('gt')||n.includes('ground')){gtFile=f}
+    else if(n.includes('spline')||n.includes('tube')){spFile=f}
+  }
+
+  // Anything unassigned: fill remaining slots in order
+  const unassigned=list.filter(f=>f!==gtFile&&f!==spFile&&f!==pcFile);
+  for(const f of unassigned){
+    if(!gtFile){gtFile=f}
+    else if(!spFile){spFile=f}
+    else if(!pcFile){pcFile=f}}
+
+  // Load sequentially to avoid race conditions
+  let chain=Promise.resolve();
+  if(gtFile){chain=chain.then(()=>new Promise(res=>{
+    const r=new FileReader();r.onload=function(e){
+      loadAsMeshFromText(e.target.result,'gt');res()};r.readAsText(gtFile)}))}
+  if(spFile){chain=chain.then(()=>new Promise(res=>{
+    const r=new FileReader();r.onload=function(e){
+      loadAsMeshFromText(e.target.result,'spline');res()};r.readAsText(spFile)}))}
+  if(pcFile){chain=chain.then(()=>new Promise(res=>{
+    const r=new FileReader();r.onload=function(e){
+      loadAsPointsFromText(e.target.result);res()};r.readAsText(pcFile)}))}
+  chain.then(()=>setMode('all'))}
+
+// ── Text-based loaders (called by loadAll) ───────────────────
+function loadAsMeshFromText(text,target){
+  const group=target==='gt'?gGT:gSP;
+  const d=parseOBJ(text);
+  clearGroup(group);
+  const geo=new THREE.BufferGeometry();
+  geo.setAttribute('position',new THREE.BufferAttribute(d.v,3));
+  geo.setAttribute('color',new THREE.BufferAttribute(d.c,3));
+  if(d.f.length>0){
+    geo.setIndex(new THREE.BufferAttribute(d.f,1));
     geo.computeVertexNormals();
-    
-    const mat = new THREE.MeshStandardMaterial({
-      vertexColors: true, roughness: 0.5, metalness: 0.03, side: THREE.DoubleSide
-    });
-    splineGroup.add(new THREE.Mesh(geo, mat));
-    splineLoaded = true;
-    
-    const nVerts = data.verts.length / 3;
-    const nFaces = data.faces.length / 3;
-    document.getElementById('obj-status').textContent = `${nVerts.toLocaleString()} verts`;
-    document.getElementById('stat-spline').innerHTML = 
-      `<span style="color:#88ccff">Spline:</span> ${nVerts.toLocaleString()} verts, ${nFaces.toLocaleString()} faces`;
-    document.getElementById('stat-note').textContent = 'Real data loaded';
-    document.getElementById('stat-note').style.color = '#66ff88';
+    group.add(new THREE.Mesh(geo,new THREE.MeshStandardMaterial({
+      vertexColors:true,roughness:0.5,metalness:0.03,side:THREE.DoubleSide})))}
+  else{
+    group.add(new THREE.Points(geo,new THREE.PointsMaterial({
+      size:0.004,vertexColors:true,sizeAttenuation:true,transparent:true,opacity:0.9})))}
+  const nV=d.v.length/3,nF=d.f.length/3;
+  const col=target==='gt'?'#66ff88':'#88ccff';
+  const lab=target==='gt'?'GT':'Spline';
+  document.getElementById('fs-'+(target==='gt'?'gt':'sp')).textContent=
+    nF>0?nV.toLocaleString()+'v':nV.toLocaleString()+'p';
+  document.getElementById('s-'+(target==='gt'?'gt':'sp')).innerHTML=
+    `<span style="color:${col}">${lab}:</span> `+(nF>0?
+    `${nV.toLocaleString()} verts, ${nF.toLocaleString()} faces`:
+    `${nV.toLocaleString()} points`)}
 
-    setMode(mode); // refresh positions
-  };
-  reader.readAsText(file);
-}
+function loadAsPointsFromText(text){
+  let d;
+  if(text.trimStart().startsWith('ply')){d=parsePLY(text)}
+  else{const obj=parseOBJ(text);d={v:obj.v,c:obj.c}}
+  clearGroup(gPC);
+  const geo=new THREE.BufferGeometry();
+  geo.setAttribute('position',new THREE.BufferAttribute(d.v,3));
+  geo.setAttribute('color',new THREE.BufferAttribute(d.c,3));
+  gPC.add(new THREE.Points(geo,new THREE.PointsMaterial({
+    size:0.008,vertexColors:true,sizeAttenuation:true,transparent:true,opacity:0.9})));
+  const n=d.v.length/3;
+  document.getElementById('fs-pc').textContent=n.toLocaleString()+'p';
+  document.getElementById('s-pc').innerHTML=
+    `<span style="color:#ff9999">Points:</span> ${n.toLocaleString()} points`}
 
-function loadPLY(file) {
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    const data = parsePLY(e.target.result);
-    
-    while (pointGroup.children.length) pointGroup.remove(pointGroup.children[0]);
-    
-    const geo = new THREE.BufferGeometry();
-    geo.setAttribute('position', new THREE.BufferAttribute(data.verts, 3));
-    geo.setAttribute('color', new THREE.BufferAttribute(data.colors, 3));
-    
-    const mat = new THREE.PointsMaterial({
-      size: 0.008, vertexColors: true, sizeAttenuation: true,
-      transparent: true, opacity: 0.9
-    });
-    pointGroup.add(new THREE.Points(geo, mat));
-    pointLoaded = true;
-    
-    const nPts = data.verts.length / 3;
-    document.getElementById('ply-status').textContent = `${nPts.toLocaleString()} pts`;
-    document.getElementById('stat-points').innerHTML = 
-      `<span style="color:#ff9999">Points:</span> ${nPts.toLocaleString()} points`;
-    
-    setMode(mode);
-  };
-  reader.readAsText(file);
-}
-
-// ── Generate procedural demo if no files loaded ──────────────
-function generateDemo() {
-  // B-spline evaluation
-  function evalBSpline(cps, n) {
-    const K=cps.length, nSeg=K-3; if(nSeg<1)return cps;
-    const M=[[-1/6,3/6,-3/6,1/6],[3/6,-6/6,3/6,0],[-3/6,0,3/6,0],[1/6,4/6,1/6,0]];
-    const pts=[];
-    for(let i=0;i<n;i++){const t=(i/(n-1))*nSeg,seg=Math.min(Math.floor(t),nSeg-1),u=t-seg,u2=u*u,u3=u2*u;
-    const b=M.map(r=>r[0]*u3+r[1]*u2+r[2]*u+r[3]);let x=0,y=0,z=0;
-    for(let j=0;j<4;j++){x+=b[j]*cps[seg+j][0];y+=b[j]*cps[seg+j][1];z+=b[j]*cps[seg+j][2];}pts.push([x,y,z]);}
-    return pts;
-  }
-
-  const NC=400, K=12, M=32;
-  let s=42;const rand=()=>{s=(s*16807)%2147483647;return(s&0x7fffffff)/2147483647;};
-  const rnorm=()=>{const u1=rand(),u2=rand();return Math.sqrt(-2*Math.log(u1+1e-10))*Math.cos(2*Math.PI*u2);};
-
-  // Spline tubes via CatmullRomCurve3 + TubeGeometry
-  const tubeR = 0.0025;
+// ── Procedural demo ──────────────────────────────────────────
+function genDemo(){
+  function eBS(cps,n){const K=cps.length,nS=K-3;if(nS<1)return cps;
+  const M=[[-1/6,3/6,-3/6,1/6],[3/6,-6/6,3/6,0],[-3/6,0,3/6,0],[1/6,4/6,1/6,0]];const pts=[];
+  for(let i=0;i<n;i++){const t=(i/(n-1))*nS,sg=Math.min(Math.floor(t),nS-1),u=t-sg,u2=u*u,u3=u2*u;
+  const b=M.map(r=>r[0]*u3+r[1]*u2+r[2]*u+r[3]);let x=0,y=0,z=0;
+  for(let j=0;j<4;j++){x+=b[j]*cps[sg+j][0];y+=b[j]*cps[sg+j][1];z+=b[j]*cps[sg+j][2]}pts.push([x,y,z])}return pts}
+  const NC=400,K=12,SM=32,tR=0.0025;
+  let s=42;const rn=()=>{s=(s*16807)%2147483647;return(s&0x7fffffff)/2147483647};
+  const rg=()=>{const u1=rn(),u2=rn();return Math.sqrt(-2*Math.log(u1+1e-10))*Math.cos(2*Math.PI*u2)};
   for(let c=0;c<NC;c++){
-    const cx=rnorm()*0.25,cz=rnorm()*0.25,topY=0.85+rand()*0.15;
-    const sx=rnorm()*0.35,sz=rnorm()*0.35,curl=rand()*1.5,camp=rand()*0.04;
-    const cps=[];
-    for(let k=0;k<K;k++){const t=k/(K-1);
-    cps.push([cx+t*0.5*sx+Math.sin(t*curl*Math.PI)*camp,topY-t*1.2-t*t*0.25,cz+t*0.5*sz+Math.cos(t*curl*Math.PI)*camp]);}
-    
-    const sampled=evalBSpline(cps,M);
-    const pathPts=sampled.map(p=>new THREE.Vector3(p[0],p[1],p[2]));
-    const path=new THREE.CatmullRomCurve3(pathPts);
-    const geo=new THREE.TubeGeometry(path,M-1,tubeR,3,false);
-    
-    const cols=new Float32Array(geo.attributes.position.count*3);
-    const pos=geo.attributes.position.array;
-    for(let i=0;i<geo.attributes.position.count;i++){
-      const t=Math.max(0,Math.min(1,(0.85-pos[i*3+1])/1.2));
-      const h=((c*137.508)%360)/3600;
-      cols[i*3]=0.58+h+(0.90-0.58)*t; cols[i*3+1]=0.40+h*0.5+(0.76-0.40)*t; cols[i*3+2]=0.20+(0.48-0.20)*t;
-    }
-    geo.setAttribute('color',new THREE.BufferAttribute(cols,3));
-    splineGroup.add(new THREE.Mesh(geo,new THREE.MeshStandardMaterial({vertexColors:true,roughness:0.5,metalness:0.03,side:THREE.DoubleSide})));
-    
-    // Point cloud: K points per curve
-    const pcGeo=new THREE.BufferGeometry();
-    const pcPos=new Float32Array(K*3),pcCol=new Float32Array(K*3);
-    for(let k=0;k<K;k++){
-      pcPos[k*3]=cps[k][0];pcPos[k*3+1]=cps[k][1];pcPos[k*3+2]=cps[k][2];
-      const t=k/(K-1);const h=((c*137.508)%360)/3600;
-      pcCol[k*3]=0.58+h+(0.90-0.58)*t;pcCol[k*3+1]=0.40+h*0.5+(0.76-0.40)*t;pcCol[k*3+2]=0.20+(0.48-0.20)*t;
-    }
-    pcGeo.setAttribute('position',new THREE.BufferAttribute(pcPos,3));
-    pcGeo.setAttribute('color',new THREE.BufferAttribute(pcCol,3));
-    pointGroup.add(new THREE.Points(pcGeo,new THREE.PointsMaterial({size:0.01,vertexColors:true,sizeAttenuation:true})));
-  }
-
-  document.getElementById('stat-spline').innerHTML=`<span style="color:#88ccff">Spline:</span> ${NC} curves × ${M} pts (procedural)`;
-  document.getElementById('stat-points').innerHTML=`<span style="color:#ff9999">Points:</span> ${NC} curves × ${K} pts (procedural)`;
-  document.getElementById('stat-note').textContent='Load .OBJ/.PLY for real data';
-  
-  setMode('compare');
-}
-
-// ── Init ─────────────────────────────────────────────────────
-generateDemo();
-
-function animate() { requestAnimationFrame(animate); renderer.render(scene, camera); }
-animate();
-
-window.addEventListener('resize', () => {
-  camera.aspect = innerWidth/innerHeight;
-  camera.updateProjectionMatrix();
-  renderer.setSize(innerWidth, innerHeight);
-});
+    const cx=rg()*0.25,cz=rg()*0.25,ty=0.85+rn()*0.15,sx=rg()*0.35,sz=rg()*0.35,cr=rn()*1.5,ca=rn()*0.04;
+    const cps=[];for(let k=0;k<K;k++){const t=k/(K-1);cps.push([cx+t*0.5*sx+Math.sin(t*cr*Math.PI)*ca,ty-t*1.2-t*t*0.25,cz+t*0.5*sz+Math.cos(t*cr*Math.PI)*ca])}
+    const br=0.9+rn()*0.2,wm=rn()*0.06-0.03;
+    function col(t){return[(0.55+(0.88-0.55)*t)*br+wm,(0.42+(0.78-0.42)*t)*br,(0.22+(0.48-0.22)*t)*br-wm*0.3]}
+    // GT + Spline as tube meshes
+    for(let pass=0;pass<2;pass++){
+      const nc=pass===0?cps:cps.map(p=>[p[0]+rg()*0.005,p[1]+rg()*0.005,p[2]+rg()*0.005]);
+      const sm=eBS(nc,SM),pp=sm.map(p=>new THREE.Vector3(p[0],p[1],p[2]));
+      const pa=new THREE.CatmullRomCurve3(pp),gg=new THREE.TubeGeometry(pa,SM-1,tR,3,false);
+      const gc=new Float32Array(gg.attributes.position.count*3),gp=gg.attributes.position.array;
+      for(let i=0;i<gg.attributes.position.count;i++){const t=Math.max(0,Math.min(1,(0.85-gp[i*3+1])/1.2));const cc=col(t);gc[i*3]=cc[0];gc[i*3+1]=cc[1];gc[i*3+2]=cc[2]}
+      gg.setAttribute('color',new THREE.BufferAttribute(gc,3));
+      (pass===0?gGT:gSP).add(new THREE.Mesh(gg,new THREE.MeshStandardMaterial({vertexColors:true,roughness:0.5,metalness:0.03,side:THREE.DoubleSide})))}
+    // Points as dots
+    const pg=new THREE.BufferGeometry(),pP=new Float32Array(K*3),pC=new Float32Array(K*3);
+    for(let k=0;k<K;k++){pP[k*3]=cps[k][0];pP[k*3+1]=cps[k][1];pP[k*3+2]=cps[k][2];
+    const t=k/(K-1),cc=col(t);pC[k*3]=cc[0];pC[k*3+1]=cc[1];pC[k*3+2]=cc[2]}
+    pg.setAttribute('position',new THREE.BufferAttribute(pP,3));pg.setAttribute('color',new THREE.BufferAttribute(pC,3));
+    gPC.add(new THREE.Points(pg,new THREE.PointsMaterial({size:0.01,vertexColors:true,sizeAttenuation:true})))}
+  document.getElementById('s-gt').innerHTML=`<span style="color:#66ff88">GT:</span> ${NC} curves (tubes)`;
+  document.getElementById('s-sp').innerHTML=`<span style="color:#88ccff">Spline:</span> ${NC} curves (tubes)`;
+  document.getElementById('s-pc').innerHTML=`<span style="color:#ff9999">Points:</span> ${NC*K} pts (${K}/curve)`;
+  setMode('all')}
+genDemo();
+function anim(){requestAnimationFrame(anim);R.render(S,cam)}anim();
+window.addEventListener('resize',()=>{cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix();R.setSize(innerWidth,innerHeight)});
 </script>
 </body>
 </html>

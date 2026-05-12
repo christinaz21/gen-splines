@@ -16,3 +16,6 @@ logs/
 outputs/wm_10k_curly/
 outputs/wm_10k_straight/
 outputs/wm_10k_wavy/
+outputs/wm_straight_gt
+outputs/wm_curly_gt
+outputs/wm_wavy_gt
