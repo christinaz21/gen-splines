@@ -78,7 +78,7 @@ def main():
 
     elif args.from_hair:
         print(f"Loading from {args.model_name}.hair ...")
-        from hair_loader_fast import (download_yuksel_hair, load_hair_file,
+        from hair_loader import (download_yuksel_hair, load_hair_file,
                                       hair_to_spline_field)
         hp = download_yuksel_hair(args.model_name, save_dir=args.data_dir)
         strands = load_hair_file(hp)

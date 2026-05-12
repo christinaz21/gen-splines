@@ -1066,7 +1066,7 @@ def main():
     from spline import evaluate_bspline
 
     if args.scene_type == "hair":
-        from hair_loader_fast import download_yuksel_hair, load_hair_file, hair_to_spline_field
+        from hair_loader import download_yuksel_hair, load_hair_file, hair_to_spline_field
         log(f"\n  Loading hair data: {args.model_name} ...")
         hp = download_yuksel_hair(args.model_name, save_dir=args.data_dir)
         strands = load_hair_file(hp)

@@ -1,12 +1,12 @@
 """
-hair_loader_fast.py — Drop-in replacement for hair_loader.py with 10-50x speedup.
+hair_loader.py — Drop-in replacement for hair_loader.py with 10-50x speedup.
 
 Changes from original:
   1. subsample_strands "diverse": vectorized farthest-point sampling with numpy broadcasting
   2. fit_bspline_to_strand: batched uniform resampling instead of per-strand scipy.splprep
   3. Progress bars for all long operations
 
-Usage: replace `from hair_loader import ...` with `from hair_loader_fast import ...`
+Usage: replace `from hair_loader import ...` with `from hair_loader import ...`
 Same API, same outputs, much faster.
 """
 
