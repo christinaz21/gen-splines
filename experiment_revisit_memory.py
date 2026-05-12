@@ -48,7 +48,7 @@ from coordinates import orient_cp
 from memory import PersistentCurveMemory, PersistentPointMemory, PersistentGaussianMemory
 
 # Reuse rendering helpers (safe import; does not run run_dense main)
-from run_dense import (
+from run_spline import (
     blonde_colors,
     render_pts,
     render_cp_blonde,

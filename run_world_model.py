@@ -1,5 +1,5 @@
 """
-world_model.py — Mini World Model with Persistent Curve Memory
+run_world_model.py — Mini World Model with Persistent Curve Memory
 
 Demonstrates splines as spatial memory for a world model using
 Cem Yuksel hair data (via hair_loader.py).
@@ -19,11 +19,11 @@ Three phases:
     Measure temporal consistency.
 
 Run on Amarel:
-    python world_model.py --model-name wStraight \
+    python run_world_model.py --model-name wStraight \
         --num-curves 500 --output-dir outputs/world_model_hair
 
     # Quick test:
-    python world_model.py --model-name wStraight --quick \
+    python run_world_model.py --model-name wStraight --quick \
         --output-dir outputs/wm_quick
 """
 

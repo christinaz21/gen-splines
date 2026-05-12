@@ -1,5 +1,5 @@
 """
-run_dense.py — Dense pipeline: fit, optimize, render presentation video.
+run_spline.py — Dense pipeline: fit, optimize, render presentation video.
 All panels render as blonde hair for visual clarity.
 """
 

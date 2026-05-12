@@ -2,7 +2,7 @@
 export_gt.py — Convert ground truth data to OBJ for the live viewer.
 
 Supports two sources:
-  1. gt_cp.pt from world_model.py output (already fitted B-spline CPs)
+  1. gt_cp.pt from run_world_model.py output (already fitted B-spline CPs)
   2. Raw .hair file from Cem Yuksel dataset
 
 Both produce an OBJ tube mesh that loads in the viewer alongside
@@ -39,7 +39,7 @@ def main():
 
     # Source selection
     p.add_argument("--from-pt", type=str, default=None,
-                   help="Path to gt_cp.pt (control points from world_model.py)")
+                   help="Path to gt_cp.pt (control points from run_world_model.py)")
     p.add_argument("--from-hair", action="store_true",
                    help="Load from raw .hair file instead")
     p.add_argument("--model-name", default="wStraight")

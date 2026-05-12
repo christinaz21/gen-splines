@@ -1,13 +1,13 @@
 """
 render_utils.py — Tube mesh rendering for splines + point rendering for point clouds + export.
 
-Drop this alongside world_model.py. It provides:
+Drop this alongside run_world_model.py. It provides:
   - render_spline_tubes(): renders spline CPs as lit 3D tube meshes
   - render_point_dots(): renders points as dots (for point cloud baseline)
   - export_tubes_obj(): exports spline tubes as .OBJ mesh with vertex colors
   - export_points_ply(): exports point cloud as .PLY with colors
 
-Usage in world_model.py:
+Usage in run_world_model.py:
     from render_utils import render_spline_tubes, render_point_dots
     from render_utils import export_tubes_obj, export_points_ply
 """

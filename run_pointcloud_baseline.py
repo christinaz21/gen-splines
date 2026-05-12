@@ -7,7 +7,7 @@ Purpose:
 
 This script:
   1) Loads a Yuksel hair model and fits spline control points (same upstream data prep
-     as run_dense.py so comparisons are apples-to-apples).
+     as run_spline.py so comparisons are apples-to-apples).
   2) Converts GT splines to a GT point cloud.
   3) Initializes a noisy predicted point cloud and optimizes it across views using:
        - Render loss (current view)

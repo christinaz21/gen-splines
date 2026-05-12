@@ -1,10 +1,10 @@
 """
-run_full_baseline_pipeline.py — One-command baseline evaluation pipeline.
+run_full_pipeline.py — One-command baseline evaluation pipeline.
 
 This orchestrates the full workflow so you do not have to run multiple files manually:
-  1) run_dense.py
+  1) run_spline.py
   2) run_pointcloud_baseline.py
-  3) run_gaussian_splat_baseline.py
+  3) run_gaussian_baseline.py
   4) compare_baselines.py
   5) evaluate_external_targets.py
 
@@ -117,7 +117,7 @@ def main():
 
     if not args.skip_spline:
         cmd = (
-            f"{python} run_dense.py "
+            f"{python} run_spline.py "
             f"--model-name {q(args.model_name)} "
             f"--data-dir {q(args.data_dir)} "
             f"--num-curves {args.num_curves} "
@@ -180,7 +180,7 @@ def main():
 
     if not args.skip_gaussian:
         cmd = (
-            f"{python} run_gaussian_splat_baseline.py "
+            f"{python} run_gaussian_baseline.py "
             f"--model-name {q(args.model_name)} "
             f"--data-dir {q(args.data_dir)} "
             f"--num-curves {args.num_curves} "

@@ -1,5 +1,5 @@
 """
-run_gaussian_splat_baseline.py — Isotropic Gaussian splat baseline.
+run_gaussian_baseline.py — Isotropic Gaussian splat baseline.
 
 This baseline follows the same optimization protocol as run_pointcloud_baseline.py,
 but parameterizes each primitive as a 3D Gaussian splat with learnable:

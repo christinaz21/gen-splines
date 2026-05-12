@@ -10,9 +10,9 @@ Why this exists:
   2) Render MSE on held-out (offset) camera azimuths.
 
 Inputs:
-  - Spline run results: run_dense.py output opt_results.pt
+  - Spline run results: run_spline.py output opt_results.pt
   - Point baseline results: run_pointcloud_baseline.py output point_baseline_results.pt
-  - Gaussian baseline results: run_gaussian_splat_baseline.py output gaussian_baseline_results.pt (optional)
+  - Gaussian baseline results: run_gaussian_baseline.py output gaussian_baseline_results.pt (optional)
   - Hair model name / data dir for loading raw strands
 
 Outputs:

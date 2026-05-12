@@ -37,7 +37,7 @@ echo "============================================================"
 # python -c "from hair_loader import download_yuksel_hair; download_yuksel_hair('${MODEL}')"
 
 # Run v2_full
-python run_full_baseline_pipeline.py \
+python run_full_pipeline.py \
   --model-name wWavy \
   --device cuda \
   --output-root outputs/with_gs/full_pipeline_wWavy \
@@ -60,7 +60,7 @@ python run_full_baseline_pipeline.py \
 # python run_pointcloud_baseline.py --model-name wStraight --device cuda --output-dir outputs/pointcloud_baseline
 
 
-# python run_dense.py --model-name wStraight --output-dir outputs/my_dense_run --device cuda
+# python run_spline.py --model-name wStraight --output-dir outputs/my_dense_run --device cuda
 # python optimize_v2.py \
 #     --data-source yuksel \
 #     --model-name ${MODEL} \
