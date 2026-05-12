@@ -1,14 +1,11 @@
 """
 world_model.py — Mini World Model with Persistent Curve Memory
 
-Demonstrates splines as spatial memory for a world model. Supports two
-scene types using the SAME pipeline:
+Demonstrates splines as spatial memory for a world model using
+Cem Yuksel hair data (via hair_loader.py).
 
-  --scene-type hair   → Cem Yuksel hair data (uses hair_loader.py)
-  --scene-type grass  → Procedural grass field (uses grass_scene.py)
-
-Both produce (N, K, 3) control points → same evaluate_bspline, same renderer,
-same losses, same optimization loop. Only the data source changes.
+Produces (N, K, 3) control points → evaluate_bspline → renderer → losses
+→ sequential optimization loop.
 
 Three phases:
 
@@ -22,16 +19,12 @@ Three phases:
     Measure temporal consistency.
 
 Run on Amarel:
-    # Hair scene:
-    python world_model.py --scene-type hair --model-name wStraight \
+    python world_model.py --model-name wStraight \
         --num-curves 500 --output-dir outputs/world_model_hair
 
-    # Grass field scene:
-    python world_model.py --scene-type grass --num-curves 1000 \
-        --output-dir outputs/world_model_grass
-
     # Quick test:
-    python world_model.py --scene-type grass --quick --output-dir outputs/wm_grass_quick
+    python world_model.py --model-name wStraight --quick \
+        --output-dir outputs/wm_quick
 """
 
 import argparse, json, os, time
@@ -63,32 +56,13 @@ def hair_colors(n, seed=42):
     return torch.tensor(np.clip(base + j, 0.05, 1), dtype=torch.float32)
 
 
-def grass_vis_colors(n, seed=42):
-    rng = np.random.RandomState(seed)
-    base = np.array([0.28, 0.48, 0.15])
-    j = rng.uniform(-0.06, 0.06, size=(n, 3))
-    return torch.tensor(np.clip(base + j, 0.03, 1), dtype=torch.float32)
-
-
-# Global scene type — set in main(), used by render_vis
-_SCENE_TYPE = "hair"
-
-
-def scene_colors(n, seed=42):
-    if _SCENE_TYPE == "grass":
-        return grass_vis_colors(n, seed)
-    return hair_colors(n, seed)
-
-
-BG_HAIR = (0.12, 0.12, 0.15)
-BG_GRASS = (0.08, 0.10, 0.12)
-BG = BG_HAIR  # overwritten in main()
+BG = (0.12, 0.12, 0.15)
 
 
 class CachedTubeRenderer:
     """
     Builds tube mesh ONCE, renders from multiple angles WITHOUT rebuilding.
-    
+
     Visual improvements:
     - Curve interpolation: densifies N trained curves to densify_factor*N for rendering
     - Thinner tubes (0.0015 default vs 0.003 before)
@@ -197,7 +171,7 @@ def render_vis_dots(points, az, args, seed=99):
         PointsRenderer, look_at_view_transform)
     from pytorch3d.structures import Pointclouds
 
-    colors = scene_colors(points.shape[0], seed)
+    colors = hair_colors(points.shape[0], seed)
     R, T = look_at_view_transform(dist=args.vis_dist, elev=args.vis_elev, azim=az)
     cam = FoVPerspectiveCameras(device=args.device, R=R, T=T)
     rset = PointsRasterizationSettings(
@@ -621,7 +595,6 @@ def revisitation_phase(sp_cp, pc_points, gt_cp, gt_points,
     except Exception as e:
         log(f"    Tube build failed ({e}), using dots")
         use_tubes = False
-        use_tubes = False
 
     with torch.no_grad():
         if not use_tubes:
@@ -971,12 +944,8 @@ def plot_summary(sp_hist, pc_hist, gen_data, revisit_data, args):
 
 def main():
     p = argparse.ArgumentParser()
-    p.add_argument("--scene-type", default="hair", choices=["hair", "grass"],
-                   help="Scene type: 'hair' uses Cem Yuksel data, 'grass' uses procedural field")
     p.add_argument("--model-name", default="wStraight",
-                   help="Hair model name (only used with --scene-type hair)")
-    p.add_argument("--grass-type", default="mixed", choices=["simple", "mixed"],
-                   help="Grass field type (only used with --scene-type grass)")
+                   help="Cem Yuksel hair model name (e.g. wStraight, wWavy, wCurly)")
     p.add_argument("--data-dir", default="data")
     p.add_argument("--num-curves", type=int, default=500)
     p.add_argument("--K", type=int, default=12)
@@ -1052,39 +1021,22 @@ def main():
     os.makedirs(args.output_dir, exist_ok=True)
 
     log(f"\n{'='*60}")
-    log(f"  MINI WORLD MODEL — {args.scene_type.upper()} SCENE")
+    log(f"  MINI WORLD MODEL — HAIR SCENE")
     log(f"  Phase 1: Explore 0°-{args.explore_range}° ({args.explore_views} views)")
     log(f"  Phase 2: Generate full 360° ({args.gen_views} views)")
     log(f"  Phase 3: Revisit explored viewpoints")
     log(f"  {args.num_curves} curves | K={args.K}")
     log(f"{'='*60}")
 
-    # Load data — SAME pipeline, different data source
-    global _SCENE_TYPE, BG
-    _SCENE_TYPE = args.scene_type
-    BG = BG_GRASS if args.scene_type == "grass" else BG_HAIR
     from spline import evaluate_bspline
+    from hair_loader import download_yuksel_hair, load_hair_file, hair_to_spline_field
 
-    if args.scene_type == "hair":
-        from hair_loader import download_yuksel_hair, load_hair_file, hair_to_spline_field
-        log(f"\n  Loading hair data: {args.model_name} ...")
-        hp = download_yuksel_hair(args.model_name, save_dir=args.data_dir)
-        strands = load_hair_file(hp)
-        gt_cp = hair_to_spline_field(strands, num_curves=args.num_curves, K=args.K,
-                                     seed=args.seed, strategy="diverse")
-        gt_cp = orient(gt_cp).to(args.device)
-
-    elif args.scene_type == "grass":
-        from grass_scene import grass_to_spline_field
-        log(f"\n  Generating grass field: {args.num_curves} blades, type={args.grass_type} ...")
-        gt_cp = grass_to_spline_field(num_curves=args.num_curves, K=args.K,
-                                      seed=args.seed, scene_type=args.grass_type)
-        gt_cp = orient(gt_cp).to(args.device)
-
-        # Adjust camera for grass (lower angle, closer)
-        args.vis_elev = 15.0
-        args.vis_dist = 2.5
-        args.opt_radius = 0.015
+    log(f"\n  Loading hair data: {args.model_name} ...")
+    hp = download_yuksel_hair(args.model_name, save_dir=args.data_dir)
+    strands = load_hair_file(hp)
+    gt_cp = hair_to_spline_field(strands, num_curves=args.num_curves, K=args.K,
+                                 seed=args.seed, strategy="diverse")
+    gt_cp = orient(gt_cp).to(args.device)
 
     with torch.no_grad():
         gt_points = evaluate_bspline(gt_cp, args.opt_samples).reshape(-1, 3)
@@ -1168,8 +1120,7 @@ def main():
 
     # Save metrics
     metrics = {
-        "scene_type": args.scene_type,
-        "model": args.model_name if args.scene_type == "hair" else f"grass_{args.grass_type}",
+        "model": args.model_name,
         "num_curves": args.num_curves,
         "explore_range": args.explore_range,
         "explore_views": args.explore_views,

@@ -10,7 +10,6 @@ New techniques beyond v1:
 
 Usage:
     python optimize_v2.py --data-source yuksel --model-name straight --num-curves 50
-    python optimize_v2.py --data-source synthetic --num-curves 30
 """
 
 import os
@@ -227,7 +226,7 @@ def run_enhanced_sequential(args):
     print(f"{'='*70}")
 
     # ------------------------------------------------------------------
-    # 1. Load data — real or synthetic
+    # 1. Load data
     # ------------------------------------------------------------------
     if args.data_source == "yuksel":
         from hair_loader import download_yuksel_hair, load_hair_file, hair_to_spline_field
@@ -236,13 +235,6 @@ def run_enhanced_sequential(args):
         gt_cp = hair_to_spline_field(
             strands, num_curves=args.num_curves, K=args.K,
             seed=args.seed, strategy=args.strand_strategy
-        ).to(device)
-    elif args.data_source == "synthetic":
-        from dataset import create_combined_scene
-        gt_cp = create_combined_scene(
-            num_helix=args.num_curves // 2,
-            num_wave=args.num_curves - args.num_curves // 2,
-            K=args.K, seed=args.seed
         ).to(device)
     elif args.data_source == "file":
         gt_cp = torch.load(args.cp_file).to(device)
@@ -540,7 +532,7 @@ if __name__ == "__main__":
 
     # Data
     parser.add_argument("--data-source", type=str, default="yuksel",
-                        choices=["yuksel", "synthetic", "file"])
+                        choices=["yuksel", "file"])
     parser.add_argument("--model-name", type=str, default="straight",
                         help="Yuksel model: straight, wCurly, wWavy, wStraight, etc.")
     parser.add_argument("--cp-file", type=str, default=None,
