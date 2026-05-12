@@ -56,7 +56,7 @@ def main():
     p.add_argument("--anchor-weight", type=float, default=0.02)
     p.add_argument("--opt-image-size", type=int, default=256)
     p.add_argument("--opt-radius", type=float, default=0.02)
-    p.add_argument("--skip-video", action="store_true", help="Skip heavy video rendering stage in run_dense.")
+    p.add_argument("--skip-video", action="store_true", help="Skip heavy video rendering stage in run_spline.")
 
     # Point baseline settings
     p.add_argument("--pc-points-per-curve", type=int, default=12)

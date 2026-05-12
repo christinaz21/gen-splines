@@ -47,14 +47,14 @@ from spline import SplineField, evaluate_bspline
 from coordinates import orient_cp
 from memory import PersistentCurveMemory, PersistentPointMemory, PersistentGaussianMemory
 
-# Reuse rendering helpers (safe import; does not run run_dense main)
+# Reuse rendering helpers (safe import; does not run run_spline main)
 from run_spline import (
     blonde_colors,
     render_pts,
     render_cp_blonde,
     render_dense_gt_blonde,
 )
-from run_gaussian_splat_baseline import gaussian_splat_render
+from run_gaussian_baseline import gaussian_splat_render
 
 
 def log(msg: str) -> None:

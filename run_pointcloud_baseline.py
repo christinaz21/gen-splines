@@ -381,7 +381,7 @@ def save_outputs(results, strands, args):
         plt.close()
         log(f"  Still saved to {still_path}")
 
-        # Keep a run_dense-compatible still filename.
+        # Keep a run_spline-compatible still filename.
         compat_still = os.path.join(args.output_dir, "comparison_still.png")
         if compat_still != still_path:
             import shutil
