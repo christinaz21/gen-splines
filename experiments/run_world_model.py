@@ -37,7 +37,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
-from coordinates import orient_pts as orient
+from gensplines.coordinates import orient_pts as orient
 
 
 def log(msg):
@@ -66,8 +66,8 @@ class CachedTubeRenderer:
     """
     def __init__(self, cp, vis_samples, device, tube_radius=0.0015, n_sides=4,
                  seed=42, densify_factor=1):
-        from spline import evaluate_bspline
-        from render_utils import build_tube_mesh, make_tube_colors
+        from gensplines.spline import evaluate_bspline
+        from gensplines.render_utils import build_tube_mesh, make_tube_colors
 
         N, K, D = cp.shape
 
@@ -143,7 +143,7 @@ class CachedTubeRenderer:
 def render_vis_tubes(cp, az, args, seed=42):
     """Render spline CPs as tube meshes (for spline memory + GT visualization)."""
     try:
-        from render_utils import render_spline_tubes
+        from gensplines.render_utils import render_spline_tubes
         N = cp.shape[0]
         tube_r = 0.003 * (500 / N) ** 0.2
         return render_spline_tubes(cp, args.vis_samples, float(az),
@@ -152,7 +152,7 @@ def render_vis_tubes(cp, az, args, seed=42):
                                    elev=args.vis_elev, dist=args.vis_dist, seed=seed)
     except Exception:
         # Fallback to point rendering if render_utils not available
-        from spline import evaluate_bspline
+        from gensplines.spline import evaluate_bspline
         with torch.no_grad():
             pts = evaluate_bspline(cp, args.vis_samples).reshape(-1, 3)
         return render_vis_dots(pts, az, args, seed)
@@ -248,7 +248,7 @@ def render_for_loss(points, az, config, device):
 # Core: Persistent Memory with Predict-Observe-Update loop
 # ══════════════════════════════════════════════════════════════
 
-from memory import PersistentCurveMemory, PersistentPointMemory
+from gensplines.memory import PersistentCurveMemory, PersistentPointMemory
 
 
 def explore_phase(gt_cp, gt_points, args):
@@ -263,7 +263,7 @@ def explore_phase(gt_cp, gt_points, args):
 
     Returns history of predictions, memory states, and drift.
     """
-    from spline import evaluate_bspline
+    from gensplines.spline import evaluate_bspline
 
     device = args.device
     N, K = gt_cp.shape[0], gt_cp.shape[1]
@@ -500,7 +500,7 @@ def generate_video_phase(sp_cp, pc_points, gt_cp, gt_points, args):
     At each angle, render from the frozen memory state.
     This IS video generation supported by spatial memory.
     """
-    from spline import evaluate_bspline
+    from gensplines.spline import evaluate_bspline
 
     device = args.device
     M_vis = args.vis_samples
@@ -556,7 +556,7 @@ def revisitation_phase(sp_cp, pc_points, gt_cp, gt_points,
     Phase 3: Revisitation — return to explored viewpoints.
     Compare current memory rendering vs GT at previously seen angles.
     """
-    from spline import evaluate_bspline
+    from gensplines.spline import evaluate_bspline
 
     M_vis = args.vis_samples
     log("\n  === REVISITATION CONSISTENCY ===")
@@ -1013,8 +1013,8 @@ def main():
     log(f"  {args.num_curves} curves | K={args.K}")
     log(f"{'='*60}")
 
-    from spline import evaluate_bspline
-    from hair_loader import download_yuksel_hair, load_hair_file, hair_to_spline_field
+    from gensplines.spline import evaluate_bspline
+    from gensplines.hair_loader import download_yuksel_hair, load_hair_file, hair_to_spline_field
 
     log(f"\n  Loading hair data: {args.model_name} ...")
     hp = download_yuksel_hair(args.model_name, save_dir=args.data_dir)
@@ -1066,7 +1066,7 @@ def main():
 
     # Export for live viewer and archival
     try:
-        from render_utils import (export_tubes_obj, export_points_ply,
+        from gensplines.render_utils import (export_tubes_obj, export_points_ply,
                                   export_control_points_json, export_control_points_bin)
 
         # Compact OBJ for quick loading (32 samples, 3 sides → ~15MB)

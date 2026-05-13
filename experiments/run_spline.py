@@ -5,13 +5,13 @@ All panels render as blonde hair for visual clarity.
 
 import os, sys, argparse, time, torch, numpy as np
 import torch.nn.functional as F
-from spline import SplineField, evaluate_bspline
-from hair_loader import download_yuksel_hair, load_hair_file, hair_to_spline_field
-from metrics import control_point_drift
-from optimize_v2 import (multi_view_reprojection_loss, tangent_consistency_loss,
+from gensplines.spline import SplineField, evaluate_bspline
+from gensplines.hair_loader import download_yuksel_hair, load_hair_file, hair_to_spline_field
+from gensplines.metrics import control_point_drift
+from gensplines.losses import (multi_view_reprojection_loss, tangent_consistency_loss,
                           anchor_proximity_loss, PersistentCurveMemory)
-from coordinates import orient_cp, orient_pts
-from render_utils import BLONDE, blonde_colors
+from gensplines.coordinates import orient_cp, orient_pts
+from gensplines.render_utils import BLONDE, blonde_colors
 
 def log(msg): print(msg, flush=True)
 
@@ -43,7 +43,7 @@ def render_cp_blonde(cp, az, image_size, radius, device, num_samples=96,
 def render_dense_gt_blonde(strands, az, image_size, radius, device, num_strands=3000,
                             num_pts=48, elev=25.0, dist=3.5):
     """Render raw strands as dense blonde hair with orientation fix."""
-    from hair_loader import subsample_strands
+    from gensplines.hair_loader import subsample_strands
     sel = subsample_strands(strands, num_strands, strategy="random", seed=99, min_length=5)
     pts_list, pt_counts = [], []
     for s in sel:

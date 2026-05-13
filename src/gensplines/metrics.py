@@ -12,7 +12,7 @@ Metrics:
 
 import torch
 import torch.nn.functional as F
-from spline import SplineField, evaluate_bspline
+from .spline import SplineField, evaluate_bspline
 
 
 def control_point_drift(gt_cp: torch.Tensor, pred_cp: torch.Tensor,

@@ -26,17 +26,17 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from hair_loader import download_yuksel_hair, load_hair_file, hair_to_spline_field
-from renderer import render_point_cloud
-from spline import evaluate_bspline
+from gensplines.hair_loader import download_yuksel_hair, load_hair_file, hair_to_spline_field
+from gensplines.renderer import render_point_cloud
+from gensplines.spline import evaluate_bspline
 
 
 def log(msg):
     print(msg, flush=True)
 
 
-from coordinates import orient_cp, orient_pts
-from render_utils import BLONDE, blonde_colors
+from gensplines.coordinates import orient_cp, orient_pts
+from gensplines.render_utils import BLONDE, blonde_colors
 
 
 def render_pts(points, colors, az, image_size, radius, device, elev=25.0, dist=3.5):
@@ -81,7 +81,7 @@ def render_blonde_points(points_flat, points_per_curve, az, args):
 
 
 def render_dense_gt_blonde(strands, az, args):
-    from hair_loader import subsample_strands
+    from gensplines.hair_loader import subsample_strands
 
     n_dense = min(args.dense_gt_strands, len(strands))
     sel = subsample_strands(strands, n_dense, strategy="random", seed=99, min_length=5)
@@ -146,7 +146,7 @@ def anchor_proximity_loss_points(pred_points, anchor_points, weight):
     return weight * (pred_points - anchor_points.detach()).norm(dim=-1).mean()
 
 
-from memory import PersistentPointMemory
+from gensplines.memory import PersistentPointMemory
 
 
 def paired_point_drift(gt_points, pred_points):

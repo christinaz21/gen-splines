@@ -1,15 +1,9 @@
 """
 render_utils.py — Tube mesh rendering for splines + point rendering for point clouds + export.
 
-Drop this alongside run_world_model.py. It provides:
-  - render_spline_tubes(): renders spline CPs as lit 3D tube meshes
-  - render_point_dots(): renders points as dots (for point cloud baseline)
-  - export_tubes_obj(): exports spline tubes as .OBJ mesh with vertex colors
-  - export_points_ply(): exports point cloud as .PLY with colors
-
-Usage in run_world_model.py:
-    from render_utils import render_spline_tubes, render_point_dots
-    from render_utils import export_tubes_obj, export_points_ply
+render_utils.py — Tube mesh rendering for splines + point rendering for point
+clouds + OBJ/PLY export. Used by experiment scripts (run_spline.py,
+run_world_model.py) for both differentiable rendering and offline export.
 """
 
 import math
@@ -160,7 +154,7 @@ def render_spline_tubes(cp, num_samples, az, image_size, device,
         az: camera azimuth
         image_size: render resolution
     """
-    from spline import evaluate_bspline
+    from .spline import evaluate_bspline
     from pytorch3d.structures import Meshes
     from pytorch3d.renderer import (
         look_at_view_transform, FoVPerspectiveCameras,
@@ -228,7 +222,7 @@ def export_tubes_obj(cp, num_samples, output_path, n_sides=4,
     If compact=True (default), uses fewer samples for smaller file:
       32 samples/curve, 3 sides → ~15MB instead of ~95MB.
     """
-    from spline import evaluate_bspline
+    from .spline import evaluate_bspline
 
     N, K, _ = cp.shape
     tr = tube_radius * (500 / N) ** 0.2

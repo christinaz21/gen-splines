@@ -30,9 +30,9 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
-from hair_loader import load_hair_file, subsample_strands
-from renderer import render_point_cloud
-from spline import evaluate_bspline
+from gensplines.hair_loader import load_hair_file, subsample_strands
+from gensplines.renderer import render_point_cloud
+from gensplines.spline import evaluate_bspline
 
 
 def load_torch(path):

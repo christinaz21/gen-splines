@@ -78,7 +78,7 @@ def main():
 
     elif args.from_hair:
         print(f"Loading from {args.model_name}.hair ...")
-        from hair_loader import (download_yuksel_hair, load_hair_file,
+        from gensplines.hair_loader import (download_yuksel_hair, load_hair_file,
                                       hair_to_spline_field)
         hp = download_yuksel_hair(args.model_name, save_dir=args.data_dir)
         strands = load_hair_file(hp)
@@ -92,7 +92,7 @@ def main():
     print(f"  GT: {N} curves, K={K}, {N*K*3:,} params")
 
     # Export OBJ
-    from render_utils import export_tubes_obj
+    from gensplines.render_utils import export_tubes_obj
     print(f"\nExporting tubes OBJ ...")
     export_tubes_obj(cp, args.num_samples, args.output,
                      n_sides=args.n_sides, tube_radius=args.tube_radius,
@@ -103,8 +103,8 @@ def main():
 
     # Optional PLY export
     if args.output_ply:
-        from spline import evaluate_bspline
-        from render_utils import export_points_ply
+        from gensplines.spline import evaluate_bspline
+        from gensplines.render_utils import export_points_ply
         with torch.no_grad():
             pts = evaluate_bspline(cp, args.num_samples).reshape(-1, 3)
         export_points_ply(pts, args.output_ply, seed=args.seed)

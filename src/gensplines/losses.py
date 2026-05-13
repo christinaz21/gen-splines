@@ -23,7 +23,7 @@ import torch.nn.functional as F
 import numpy as np
 
 # These imports assume existing codebase files are in the same directory
-from spline import SplineField, evaluate_bspline
+from .spline import SplineField, evaluate_bspline
 
 
 # =========================================================================
@@ -130,7 +130,7 @@ def anchor_proximity_loss(pred_cp, anchor_cp, weight=0.01):
 # Persistent memory with EMA anchors — re-exported for back-compat
 # =========================================================================
 
-from memory import PersistentCurveMemory
+from .memory import PersistentCurveMemory
 
 
 # =========================================================================
@@ -195,7 +195,7 @@ def run_enhanced_sequential(args):
     # 1. Load data
     # ------------------------------------------------------------------
     if args.data_source == "yuksel":
-        from hair_loader import download_yuksel_hair, load_hair_file, hair_to_spline_field
+        from .hair_loader import download_yuksel_hair, load_hair_file, hair_to_spline_field
         hair_path = download_yuksel_hair(args.model_name, save_dir=args.data_dir)
         strands = load_hair_file(hair_path)
         gt_cp = hair_to_spline_field(
@@ -213,7 +213,7 @@ def run_enhanced_sequential(args):
     # ------------------------------------------------------------------
     # 2. Build GT SplineField and render 360° views
     # ------------------------------------------------------------------
-    from renderer import render_point_cloud
+    from .renderer import render_point_cloud
     from pytorch3d.renderer import look_at_view_transform, FoVPerspectiveCameras
 
     gt_field = SplineField(N, K).to(device)
@@ -264,7 +264,7 @@ def run_enhanced_sequential(args):
     pred_field = SplineField(N, K).to(device)
     pred_field.control_points.data = gt_cp.clone() + args.init_noise * torch.randn_like(gt_cp)
 
-    from metrics import control_point_drift, compute_all_metrics
+    from .metrics import control_point_drift, compute_all_metrics
     initial_drift = control_point_drift(gt_cp, pred_field.control_points.data).item()
     print(f"  Initial CP drift: {initial_drift:.4f}")
 
@@ -364,7 +364,7 @@ def run_enhanced_sequential(args):
             view_drifts.append(drift)
             view_losses.append(loss.item())
 
-            from spline import SplineField as SF_temp
+            from .spline import SplineField as SF_temp
             gt_f = SF_temp(N, K); gt_f.control_points.data = gt_cp.cpu()
             pr_f = SF_temp(N, K); pr_f.control_points.data = pred_field.control_points.data.cpu()
             c_dev = (gt_f.compute_curvature(64) - pr_f.compute_curvature(64)).abs().mean().item()

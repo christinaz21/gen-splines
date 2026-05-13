@@ -34,18 +34,18 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from hair_loader import download_yuksel_hair, load_hair_file, hair_to_spline_field
-from metrics import control_point_drift
-from optimize_v2 import (
+from gensplines.hair_loader import download_yuksel_hair, load_hair_file, hair_to_spline_field
+from gensplines.metrics import control_point_drift
+from gensplines.losses import (
     multi_view_reprojection_loss,
     tangent_consistency_loss,
     anchor_proximity_loss,
 )
-from renderer import render_point_cloud
-from spline import SplineField, evaluate_bspline
+from gensplines.renderer import render_point_cloud
+from gensplines.spline import SplineField, evaluate_bspline
 
-from coordinates import orient_cp
-from memory import PersistentCurveMemory, PersistentPointMemory, PersistentGaussianMemory
+from gensplines.coordinates import orient_cp
+from gensplines.memory import PersistentCurveMemory, PersistentPointMemory, PersistentGaussianMemory
 
 # Reuse rendering helpers (safe import; does not run run_spline main)
 from run_spline import (

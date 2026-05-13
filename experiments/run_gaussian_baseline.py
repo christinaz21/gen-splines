@@ -18,9 +18,9 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from hair_loader import download_yuksel_hair, load_hair_file, hair_to_spline_field
-from spline import evaluate_bspline
-from coordinates import orient_cp
+from gensplines.hair_loader import download_yuksel_hair, load_hair_file, hair_to_spline_field
+from gensplines.spline import evaluate_bspline
+from gensplines.coordinates import orient_cp
 
 
 def log(msg):
@@ -130,7 +130,7 @@ def chamfer_distance_symmetric(a, b):
     return dists.min(dim=1).values.mean() + dists.min(dim=0).values.mean()
 
 
-from memory import PersistentGaussianMemory
+from gensplines.memory import PersistentGaussianMemory
 
 
 def build_gt_assets(gt_points, azimuths, args, device):
