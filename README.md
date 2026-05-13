@@ -63,7 +63,7 @@ is what was *run* to produce results, `evaluation/` is how those results were
 
 ---
 
-## Method, in one paragraph
+## Methodology
 
 A scene is represented as N cubic B-splines, each parameterized by K control
 points in ℝ³. Given a sequence of camera observations, control points are
