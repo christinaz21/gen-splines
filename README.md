@@ -1,213 +1,299 @@
-# Generative Spline Fields with Persistent Curve Memory
+# Persistent Curve Memory: Structured Spline Representations for Sequential Scene Updates
 
-**COS526/ECE576 — Neural Rendering Project**
-Vineal Sunkara & Christina Zhang, Princeton University
+Vineal Sunkara · Christina Zhang
+
+This repository implements a structured scene representation in which 3D
+geometry is encoded as a field of differentiable cubic B-splines, then
+optimized sequentially under a moving camera with a persistent memory anchor.
+The central question is whether *structured* primitives (curves) update more
+stably across viewpoints than the unstructured alternatives (free point
+clouds, 3D Gaussian splats) when each is given the same observations, the
+same losses, and the same memory mechanism.
+
+We evaluate on real hair geometry from the Cem Yuksel hair dataset, which
+provides scenes whose thin-structure topology directly stresses memory
+stability: even small per-point drift visibly destroys strand identity.
 
 ---
 
-## Quick Start (Copy-Paste Commands)
+## Repository tour
 
-### 0. Upload to Amarel
-
-```bash
-# From your local machine:
-scp -r spline_fields/ vss54@amarel.rutgers.edu:~/spline_fields/
-
-# SSH in:
-ssh vss54@amarel.rutgers.edu
+```
+gen-splines/
+├── src/gensplines/        # Library code (installed editable as `gensplines`)
+│   ├── spline.py          # Cubic B-spline evaluation + SplineField module
+│   ├── memory.py          # EMA persistent memory (curve / point / Gaussian)
+│   ├── losses.py          # Reprojection, tangent, anchor-proximity losses
+│   ├── metrics.py         # CP drift, curvature deviation, reprojection error
+│   ├── renderer.py        # Differentiable PyTorch3D point-cloud renderer
+│   ├── render_utils.py    # Tube-mesh construction + OBJ/PLY export
+│   ├── hair_loader.py     # Yuksel .hair parser + B-spline fitting
+│   └── coordinates.py     # Yuksel → PyTorch3D axis convention
+│
+├── experiments/           # Runnable: each writes results to outputs/
+│   ├── run_spline.py              # Main spline-memory pipeline
+│   ├── run_pointcloud_baseline.py # Point-cloud baseline (matched protocol)
+│   ├── run_gaussian_baseline.py   # Gaussian splat baseline
+│   ├── run_world_model.py         # Explore → freeze → generate → revisit
+│   ├── run_revisit_memory.py      # Multi-seed revisit-memory experiment
+│   └── run_full_pipeline.py       # Orchestrates all three + evaluation
+│
+├── evaluation/            # Post-hoc analysis of saved results
+│   ├── compare_baselines.py       # Drift / runtime comparison + plots
+│   ├── evaluate_external.py       # Chamfer + held-out render MSE vs raw hair
+│   └── export_gt.py               # Export GT control points to OBJ for viewer
+│
+├── scripts/               # SLURM submission + environment setup
+│   ├── find_conda.sh              # Sourced by other scripts
+│   ├── setup_env.sh               # One-shot environment setup
+│   ├── slurm_amarel.sh            # Full-pipeline submission
+│   └── slurm_amarel_revisit.sh    # Multi-seed revisit submission
+│
+├── viewer/                # Three.js viewer for OBJ/PLY artifacts
+├── demos/                 # 2D pedagogical demos (build intuition for 3D)
+├── data/                  # gitignored — Yuksel .hair files (placed here manually)
+├── outputs/               # gitignored — experiment results
+├── pyproject.toml         # Editable install: `pip install -e .`
+└── requirements.txt       # Conda env spec (for reference)
 ```
 
-### 1. Get a GPU node (interactive)
+The split is deliberate: `src/` is what *exists* as a library, `experiments/`
+is what was *run* to produce results, `evaluation/` is how those results were
+*measured*.
 
-```bash
-srun --partition=gpu --gres=gpu:1 --mem=32G --time=02:00:00 --cpus-per-task=4 --pty bash
+---
+
+## Method, in one paragraph
+
+A scene is represented as N cubic B-splines, each parameterized by K control
+points in ℝ³. Given a sequence of camera observations, control points are
+optimized at each viewpoint against three losses:
+(i) **rendered image loss** at the current view (PyTorch3D differentiable
+point-cloud renderer),
+(ii) **multi-view reprojection loss** against a buffer of recent views (the
+geometric anchor — single-view rendering has depth ambiguity),
+(iii) **anchor proximity loss** pulling control points toward an EMA of past
+states (the persistent memory).
+Two auxiliary regularizers — tangent consistency and curvature smoothness —
+keep curves geometrically plausible during aggressive updates. Point-cloud
+and Gaussian-splat baselines run the same protocol with the same losses
+minus the curve-specific regularizers, so the only difference between
+methods is the representation itself.
+
+---
+
+## Quick Start
+
+### Prerequisites
+
+- Linux with NVIDIA GPU (CUDA-capable). Experiments tested on A100 and L40s.
+- conda (Miniconda or full Anaconda).
+- Python 3.10.
+
+### Hair data
+
+The Yuksel hair `.hair` files are not redistributed with this repo. Download
+them manually from
+[www.cemyuksel.com/research/hairmodels/](http://www.cemyuksel.com/research/hairmodels/)
+and place them under:
+
+```
+data/hairmodels/
+├── wStraight.hair
+├── wWavyThin.hair
+├── wCurly.hair
+└── ...
 ```
 
-### 2. Set up environment (ONCE)
+The loader reads from this directory directly — there is no automatic
+download (the dataset host has scrape protection).
 
-**BEFORE RUNNING:** Edit `scripts/find_conda.sh` and `scripts/setup_env.sh`
-to set `MINICONDA_DIR` to your actual miniconda path. Currently set to:
-`$HOME/NeuralRenderingECE576/Assignment1/nrad_assignment/miniconda3`
-
-```bash
-cd ~/spline_fields
-bash scripts/setup_env.sh
-```
-
-This will auto-detect your CUDA version, create the `spline_fields` conda env,
-install PyTorch + PyTorch3D, and verify everything works.
-
-### 3. RUN THIS FIRST — Gradient Check
+### Environment setup
 
 ```bash
-source scripts/find_conda.sh
+git clone <repo-url> gen-splines
+cd gen-splines
+
+conda create -n spline_fields python=3.10 -y
 conda activate spline_fields
-cd ~/spline_fields
-mkdir -p logs outputs
 
-python step0_gradient_check.py
+# PyTorch. Pin 2.0.1 if you need glibc 2.17 compatibility (e.g. CentOS 7);
+# otherwise the latest 2.x release works.
+conda install pytorch==2.0.1 torchvision==0.15.2 pytorch-cuda=11.8 \
+    -c pytorch -c nvidia -y
+
+# PyTorch3D. Use the wheel matching your torch / CUDA combo.
+pip install pytorch3d -f https://dl.fbaipublicfiles.com/pytorch3d/packaging/wheels/py310_cu118_pyt201/download.html
+
+# Remaining deps + the gensplines package itself
+pip install matplotlib scipy imageio tqdm
+pip install -e .
 ```
 
-**Read the output carefully.** It tells you:
-- Whether gradients flow from pixels to control points
-- The best rendering radius for your setup
-- Whether optimization actually reduces loss
-
-**WRITE DOWN THE RECOMMENDED RADIUS.** You'll use it in every subsequent command.
-
-**If anything fails, STOP HERE and debug.** Common issues:
-- PyTorch3D not built for your CUDA version → rebuild with matching CUDA
-- Gradient norm is 0 → radius is too small, increase it
-- Optimization doesn't reduce loss → try larger radius or higher learning rate
-
-### 4. Generate synthetic dataset
+Verify:
 
 ```bash
-python dataset.py --radius <YOUR_BEST_RADIUS> --output-dir outputs/dataset
+python -c "import gensplines; print(gensplines.__version__)"   # 0.1.0
+python -c "from gensplines import SplineField, evaluate_bspline; print('OK')"
 ```
 
-### 5. Run single-view optimization
+### SLURM clusters
+
+`scripts/setup_env.sh` automates the above for SLURM clusters that require
+GPU-node allocation before package installation, and handles CentOS 7 /
+glibc 2.17 constraints by pinning PyTorch 2.0.1.
+
+We ran experiments on Rutgers' Amarel HPC; `scripts/slurm_amarel.sh` and
+`scripts/slurm_amarel_revisit.sh` are written for that cluster but adapt
+easily to any SLURM site — edit the `--partition`, `--gres`, and module-load
+lines to match your environment.
+
+Typical SLURM workflow:
 
 ```bash
-python optimize.py \
-    --radius <YOUR_BEST_RADIUS> \
-    --num-steps 500 \
-    --lr 1e-3 \
-    --output-dir outputs/single_view
-```
+# Request a GPU node interactively
+srun --partition=<gpu_partition> --gres=gpu:1 --mem=32G \
+     --time=02:00:00 --cpus-per-task=4 --pty bash
 
-### 6. Run sequential multi-view optimization (persistent memory)
+# One-time setup (idempotent — safe to re-run)
+cd gen-splines
+bash scripts/setup_env.sh
 
-```bash
-python optimize_sequential.py \
-    --radius <YOUR_BEST_RADIUS> \
-    --num-views 36 \
-    --steps-per-view 50 \
-    --output-dir outputs/sequential
-```
-
-### 7. (Alternative) Submit as batch jobs
-
-Edit `RADIUS=0.02` in `scripts/run_pipeline.slurm` with your best radius, then:
-
-```bash
-mkdir -p logs
-sbatch scripts/run_pipeline.slurm
-# Check status: squeue -u $USER
-# Check output: tail -f logs/optimize_*.out
+# Submit batch jobs
+sbatch scripts/slurm_amarel.sh           # full pipeline, edit MODEL inside
+sbatch scripts/slurm_amarel_revisit.sh   # multi-seed revisit
+squeue -u $USER                          # check status
+tail -f logs/gen-splines_<jobid>.out     # live output
 ```
 
 ---
 
-## What Each Script Does
+## Reproducing the main results
 
-| Script | Purpose | Runtime |
-|--------|---------|---------|
-| `step0_gradient_check.py` | **RUN FIRST.** Verifies PyTorch3D gradients flow to control points. Sweeps radius. | ~30s |
-| `dataset.py` | Generates synthetic helix/wave strand scenes with GT control points. | ~1min |
-| `optimize.py` | Optimizes control points from a single viewpoint. Validates the render-update loop. | ~2min |
-| `optimize_sequential.py` | **Core experiment.** Orbits 360° updating persistent control points sequentially. | ~10min |
+All commands assume `conda activate spline_fields` from the repo root.
 
-## File Structure
+### 1. Main spline pipeline (single model)
 
-```
-spline_fields/
-├── spline.py                  # Cubic B-spline math + SplineField module
-├── renderer.py                # PyTorch3D point cloud rendering + radius sweep
-├── dataset.py                 # Synthetic strand scene generation
-├── metrics.py                 # CP drift, curvature deviation, reprojection error
-├── step0_gradient_check.py    # PRE-FLIGHT: gradient verification
-├── optimize.py                # Single-view optimization
-├── optimize_sequential.py     # Multi-view persistent memory loop
-├── scripts/
-│   ├── find_conda.sh          # Shared conda-finding logic (edit MINICONDA_DIR here)
-│   ├── setup_env.sh           # One-shot conda setup
-│   ├── setup.slurm            # SLURM: gradient check
-│   └── run_pipeline.slurm     # SLURM: full pipeline (edit RADIUS here)
-├── outputs/                   # All results go here
-│   ├── dataset/               # GT control points + rendered images
-│   ├── single_view/           # Single-view optimization results
-│   └── sequential/            # Sequential optimization results
-└── README.md                  # This file
+```bash
+python experiments/run_spline.py \
+    --model-name wStraight \
+    --num-curves 500 --K 12 \
+    --num-views 72 --steps-per-view 80 \
+    --output-dir outputs/spline_wStraight
 ```
 
-## Understanding the Output
+Produces `opt_results.pt` (control-point trajectory + metrics),
+`comparison_still.png`, and a 360° comparison video. ~10 min on one A100.
 
-### `step0_gradient_check.py` output
+### 2. Full three-way comparison
 
-```
-  STEP 0c: Radius Sweep
-    Radius    GradNorm   GradNZ%   AlphaPx    ImgMean    Verdict
-    0.0020      0.0000      0.0%         0    0.00000   TOO SMALL
-    0.0100      0.0234     12.3%      1847    0.02810       GOOD
-    0.0200      0.0891     38.7%      7234    0.11040       GOOD    ← sweet spot
-    0.0500      0.1204     67.2%     24891    0.38100    TOO BIG
+```bash
+python experiments/run_full_pipeline.py \
+    --model-name wStraight \
+    --output-root outputs/full_wStraight
 ```
 
-**Pick the radius where GradNorm is high AND AlphaPx is reasonable.**
-The recommended value will be printed. Use it in all subsequent runs.
+Runs the spline, point-cloud, and Gaussian-splat methods in sequence, then
+`compare_baselines.py` (drift/runtime) and `evaluate_external.py` (Chamfer +
+held-out render MSE against raw hair strands). All artifacts land under
+`outputs/full_wStraight/{spline,pointcloud,gaussian,compare,external_eval}/`.
 
-### `optimize_sequential.py` output
+For a fast smoke test:
 
-The key plot is `outputs/sequential/sequential_optimization.png` showing:
-1. **CP Drift vs Azimuth** — should decrease or stay flat as you orbit
-2. **Loss per View** — should be low at each viewpoint
-3. **Curvature Deviation** — structural shape consistency
+```bash
+python experiments/run_full_pipeline.py \
+    --model-name wStraight \
+    --output-root outputs/quick \
+    --quick
+```
 
-**Good result:** Drift decreases monotonically, stays below initial value.
-**Bad result:** Drift increases during second half of orbit (memory instability).
+### 3. World-model experiment (partial observability)
 
-## Key Parameters to Tune
+The camera observes only 0°–270°. Memory is then *frozen* and used to render
+the full 360°, including the unobserved 270°–360° wedge. Measures how well
+each representation extrapolates from the seen region.
 
-| Parameter | Flag | Default | Effect |
-|-----------|------|---------|--------|
-| **Radius** | `--radius` | 0.02 | Most critical. Controls gradient quality. |
-| Steps/view | `--steps-per-view` | 50 | More = better convergence per view, slower |
-| Learning rate | `--lr` | 5e-4 | Lower = more stable, slower convergence |
-| Init noise | `--init-noise` | 0.15 | How far initial guess is from GT |
-| Samples/curve | `--samples-per-curve` | 64 | Point density for rendering |
-| Num views | `--num-views` | 36 | Angular resolution of orbit (36 = 10° steps) |
+```bash
+python experiments/run_world_model.py \
+    --model-name wStraight --explore-range 270 \
+    --output-dir outputs/world_model_wStraight
+```
 
-## Troubleshooting
+Outputs include `exploration_timeline.png`, `generation_quality.png`,
+`revisitation_consistency.png`, and a comparison video showing observed vs
+unobserved regions side-by-side.
 
-**"Gradient norm is 0"**
-→ Increase radius. Your points aren't covering enough pixels.
+### 4. Multi-seed revisit-memory experiment
 
-**"Loss decreases but CP drift doesn't"**
-→ Multiple curve configurations can produce similar images (non-convex).
-   Try: (a) add silhouette loss `--silhouette-weight 0.5`, (b) reduce init noise,
-   (c) increase samples per curve.
+Camera follows trajectory A → B → C → D → A′ (returns to start). Measures
+revisit consistency (does the representation render the same image at A′ as
+it did at A?) and held-out generalization, aggregated across RNG seeds:
 
-**"CUDA out of memory"**
-→ Reduce image size: `--image-size 128`, or reduce curves/samples.
+```bash
+python experiments/run_revisit_memory.py \
+    --model-name wWavyThin \
+    --seeds 42,43,44,45,46 \
+    --trajectory-azimuths 0,90,180,270,0 \
+    --held-out-azimuths 45,135,225,315 \
+    --output-dir outputs/revisit_wWavyThin
+```
 
-**PyTorch3D build fails**
-→ This is the most common issue on HPC. Try in order:
-  1. Make sure you're on a GPU node (not login node) when building.
-  2. Try the prebuilt wheel instead of source:
-     `pip install pytorch3d -f https://dl.fbaipublicfiles.com/pytorch3d/packaging/wheels/py310_cu121_pyt241/download.html`
-  3. Check CUDA version alignment: `nvidia-smi` shows driver CUDA, `nvcc --version`
-     shows toolkit CUDA. They must be compatible.
-  4. If all else fails, install `fvcore` and `iopath` first, then retry:
-     `pip install fvcore iopath && pip install "git+https://github.com/facebookresearch/pytorch3d.git"`
+JSON with per-seed metrics and aggregate mean/std is written to
+`revisit_results.json`, plus a comparison poster at `revisit_poster.png`.
 
-**Sequential drift increases**
-→ Learning rate too high (overshooting). Try `--lr 1e-4`.
-   Or increase `--steps-per-view` to converge more at each view.
+---
 
-## Next Steps (Weeks 3+)
+## Key implementation notes
 
-After weeks 1-2, you should have:
-- ✅ Verified gradient flow
-- ✅ Found optimal radius
-- ✅ Single-view optimization working
-- ✅ Sequential 360° optimization showing stable/decreasing drift
+- **Coordinate convention.** Yuksel hair data is Y-up; PyTorch3D expects
+  (x, z, -y). The axis flip happens *once* in `coordinates.orient_cp` /
+  `orient_pts`, before any rendering. All snapshots saved by `run_spline.py`
+  are already in the oriented frame — no double-flipping during analysis.
+- **Rendering radius is the single most sensitive hyperparameter.** Too
+  small → vanishing gradients (points cover too few pixels); too large →
+  thin structures blur into blobs. `renderer.sweep_radius()` reports
+  gradient norm and coverage across a sweep; the default 0.02 is the sweet
+  spot at image size 256.
+- **`bin_size=0` everywhere.** The coarse-bin rasterizer overflows on dense
+  hair clouds at our scales. Naive rasterization is slower but reliable.
+- **Memory anchor is EMA, not hard.** `memory.PersistentCurveMemory.update`
+  blends new control points into the anchor at decay 0.8 by default. This
+  is what `losses.anchor_proximity_loss` pulls toward — too aggressive and
+  the representation freezes; too lax and it drifts.
+- **Three baselines, one protocol.** Every representation runs the same view
+  schedule, the same loss weights (where applicable), the same view buffer,
+  and the same EMA. The only differences are the representation's degrees
+  of freedom and which auxiliary regularizers are well-defined for it.
+- **Held-out evaluation is intentionally fairer than chamfer-on-self.**
+  `evaluate_external.py` compares both methods against *raw* Yuksel strand
+  points, not the fitted GT used during optimization, and uses azimuths
+  offset half-a-step from the training grid. This penalizes overfitting to
+  the optimization signal.
 
-**Week 3-4:** Train `SplineGenerator` (Gθ) to map latent codes to control points.
-Use `spline.py::SplineGenerator` class — it's already implemented but unused.
+---
 
-**Week 5-6:** Implement frame-to-spline initialization (lifting 2D ridge
-detections into 3D using monocular depth). Integrate into the render-update loop
-with real video frames instead of synthetic GT.
+## Demos
 
-**Week 7+:** Revisitation benchmark, comparison vs point-cloud baseline.
+The `demos/` directory contains three standalone 2D scripts that build up
+the intuition behind the 3D pipeline. They have no dependency on the
+`gensplines` package and can be run with just NumPy + PyTorch + matplotlib:
+
+```bash
+python demos/01_basic_memory.py         # naive sequential update → drift
+python demos/02_with_consistency.py     # consistency loss fixes drift
+python demos/03_vs_point_baseline.py    # structured curve vs equal-DOF points
+```
+
+Each writes a `.png` to the cwd showing the curve evolution, drift
+trajectory, and revisit error. Useful for explaining the project in slides
+without needing a GPU.
+
+---
+
+## Viewer
+
+`viewer/viewer.html` is a self-contained Three.js viewer for the OBJ/PLY
+artifacts that `evaluation/export_gt.py` and `run_world_model.py` produce.
+Open it in any modern browser, drop in a `.obj` (spline tubes), `.ply`
+(point cloud), or GT mesh, and orbit. Useful for inspecting reconstruction
+quality at close zoom levels that don't survive video compression.
