@@ -2,15 +2,23 @@
 # ============================================================
 # setup_env.sh — Environment setup for Amarel (CentOS 7, glibc 2.17)
 #
-# IMPORTANT: CentOS 7 has glibc 2.17. Modern PyTorch (>=2.1) requires
-# glibc 2.27+. We MUST use PyTorch 2.0.1, which is the last version
-# that supports glibc 2.17.
+# What this does:
+#   1. Verifies you're on a GPU node.
+#   2. Finds conda.
+#   3. Creates the `spline_fields` conda env if it does NOT exist
+#      (cloning from `ddpm` if available to save ~20 min on Torch install).
+#      If the env already exists, it is reused.
+#   4. Verifies PyTorch + PyTorch3D work.
+#   5. Installs the `gensplines` package in editable mode (`pip install -e .`).
 #
-# PyTorch3D must also match: we use v0.7.5 (last for PyTorch 2.0.x).
+# IMPORTANT: CentOS 7 has glibc 2.17. Modern PyTorch (>=2.1) requires
+# glibc 2.27+. We pin PyTorch 2.0.1, the last version compatible with
+# glibc 2.17. PyTorch3D is pinned to a build that matches.
 #
 # BEFORE RUNNING:
-#   1. Get on a GPU node first!
-#      srun --partition=gpu --gres=gpu:1 --mem=32G --time=02:00:00 --cpus-per-task=4 --pty bash
+#   1. Get on a GPU node first:
+#      srun --partition=gpu --gres=gpu:1 --mem=32G --time=02:00:00 \
+#           --cpus-per-task=4 --pty bash
 #   2. Verify GPU is visible:
 #      nvidia-smi
 #      If you see "Unable to determine device handle", you are NOT on
@@ -25,10 +33,14 @@ set -euo pipefail
 ENV_NAME="spline_fields"
 MINICONDA_DIR="$HOME/NeuralRenderingECE576/Assignment1/nrad_assignment/miniconda3"
 
+# Repo root = parent of the dir this script lives in.
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
 echo "=========================================="
 echo "  Spline Fields — Environment Setup"
-echo "  Target: CentOS 7 / glibc 2.17 / Amarel"
-echo "  Node:   $(hostname)"
+echo "  Target:    CentOS 7 / glibc 2.17 / Amarel"
+echo "  Node:      $(hostname)"
+echo "  Repo root: ${REPO_ROOT}"
 echo "=========================================="
 
 # --- 0) Preflight: are we on a GPU node? ---
@@ -77,44 +89,46 @@ else
 fi
 
 # --- 2) Check if env already exists ---
+ENV_EXISTS=false
 if conda env list 2>/dev/null | grep -qw "${ENV_NAME}"; then
     echo ""
-    echo "  Environment '${ENV_NAME}' already exists."
-    echo "  To recreate: conda env remove -n ${ENV_NAME} -y && bash scripts/setup_env.sh"
-    echo "  To verify:   conda activate ${ENV_NAME} && python step0_gradient_check.py"
-    exit 0
+    echo "  Environment '${ENV_NAME}' already exists — skipping creation."
+    echo "  (Recreate from scratch with: conda env remove -n ${ENV_NAME} -y)"
+    ENV_EXISTS=true
 fi
 
-# --- 3) Try cloning existing ddpm env (fastest path) ---
-echo ""
-CLONE_SUCCESS=false
-if conda env list 2>/dev/null | grep -qw "ddpm"; then
-    echo ">>> Found existing 'ddpm' environment."
-    echo "  Checking if it has a working PyTorch..."
-    DDPM_TORCH=$(conda run -n ddpm python -c "import torch; print(torch.__version__)" 2>/dev/null || echo "FAIL")
+# --- 3) Create env (clone from ddpm or build fresh) ---
+if [ "${ENV_EXISTS}" = false ]; then
+    echo ""
+    CLONE_SUCCESS=false
+    if conda env list 2>/dev/null | grep -qw "ddpm"; then
+        echo ">>> Found existing 'ddpm' environment."
+        echo "  Checking if it has a working PyTorch..."
+        DDPM_TORCH=$(conda run -n ddpm python -c "import torch; print(torch.__version__)" 2>/dev/null || echo "FAIL")
 
-    if [[ "${DDPM_TORCH}" != "FAIL" ]]; then
-        echo "  ddpm has PyTorch ${DDPM_TORCH} — cloning it (saves ~20 min)..."
-        conda create -n "${ENV_NAME}" --clone ddpm -y
-        CLONE_SUCCESS=true
-        echo "  Clone complete."
-    else
-        echo "  ddpm PyTorch doesn't import cleanly. Building from scratch."
+        if [[ "${DDPM_TORCH}" != "FAIL" ]]; then
+            echo "  ddpm has PyTorch ${DDPM_TORCH} — cloning it (saves ~20 min)..."
+            conda create -n "${ENV_NAME}" --clone ddpm -y
+            CLONE_SUCCESS=true
+            echo "  Clone complete."
+        else
+            echo "  ddpm PyTorch doesn't import cleanly. Building from scratch."
+        fi
+    fi
+
+    if [ "${CLONE_SUCCESS}" = false ]; then
+        echo ">>> Creating fresh environment with PyTorch 2.0.1 (last glibc 2.17 compatible)..."
+        conda create -n "${ENV_NAME}" python=3.10 -y
     fi
 fi
 
-# --- 4) If clone failed, build from scratch with PyTorch 2.0.1 ---
-if [ "${CLONE_SUCCESS}" = false ]; then
-    echo ">>> Creating fresh environment with PyTorch 2.0.1 (last glibc 2.17 compatible)..."
-    conda create -n "${ENV_NAME}" python=3.10 -y
-fi
-
+# --- 4) Activate env ---
 echo ""
 echo ">>> Activating ${ENV_NAME}..."
 conda activate "${ENV_NAME}"
 
-# Only install PyTorch if we didn't clone
-if [ "${CLONE_SUCCESS}" = false ]; then
+# --- 5) Install PyTorch (only if env was just created from scratch) ---
+if [ "${ENV_EXISTS}" = false ] && [ "${CLONE_SUCCESS:-false}" = false ]; then
     echo ""
     echo ">>> Installing PyTorch 2.0.1 + CUDA 11.8 (CentOS 7 compatible)..."
     echo "  NOTE: PyTorch 2.0.1 is the LAST version supporting glibc 2.17."
@@ -122,7 +136,7 @@ if [ "${CLONE_SUCCESS}" = false ]; then
     conda install pytorch==2.0.1 torchvision==0.15.2 torchaudio==2.0.2 pytorch-cuda=11.8 -c pytorch -c nvidia -y
 fi
 
-# --- 5) Verify PyTorch works before building PyTorch3D ---
+# --- 6) Verify PyTorch works before continuing ---
 echo ""
 echo ">>> Verifying PyTorch..."
 python -c "
@@ -144,55 +158,69 @@ else:
     exit 1
 }
 
-# --- 6) Install PyTorch3D ---
+# --- 7) Install PyTorch3D (only if not already installed) ---
 echo ""
-echo ">>> Installing PyTorch3D build dependencies..."
-pip install fvcore iopath
+if python -c "import pytorch3d" 2>/dev/null; then
+    PYTORCH3D_VER=$(python -c "import pytorch3d; print(pytorch3d.__version__)")
+    echo ">>> PyTorch3D ${PYTORCH3D_VER} already installed — skipping."
+else
+    echo ">>> Installing PyTorch3D build dependencies..."
+    pip install fvcore iopath
 
-echo ""
-echo ">>> Installing PyTorch3D (--no-build-isolation to use existing torch)..."
-echo "  This will compile from source and takes 5-15 minutes."
-echo "  If it fails, see fallback options at the end of this script."
-
-# Set CXX flags for CentOS 7 compatibility
-export FORCE_CUDA=1
-# Try to find a newer GCC if available
-if module avail gcc 2>&1 | grep -q "gcc"; then
-    echo "  Loading newer GCC module..."
-    module load gcc 2>/dev/null || true
-fi
-pip install pytorch3d -f https://dl.fbaipublicfiles.com/pytorch3d/packaging/wheels/py310_cu121_pyt251/download.html || {
     echo ""
-    echo "  PyTorch3D v0.7.5 source build failed."
-    echo "  Trying v0.7.4..."
-    pip install --no-build-isolation "git+https://github.com/facebookresearch/pytorch3d.git@v0.7.4" || {
-        echo ""
-        echo "  ============================================"
-        echo "  PyTorch3D source build failed. Manual fixes:"
-        echo "  ============================================"
-        echo ""
-        echo "  Option A: Try prebuilt wheel (if available for your combo):"
-        echo "    pip install pytorch3d -f https://dl.fbaipublicfiles.com/pytorch3d/packaging/wheels/py310_cu118_pyt201/download.html"
-        echo ""
-        echo "  Option B: Load newer GCC and retry:"
-        echo "    module load gcc/9.2.0  (or whatever is available: module avail gcc)"
-        echo "    pip install --no-build-isolation 'git+https://github.com/facebookresearch/pytorch3d.git@v0.7.5'"
-        echo ""
-        echo "  Option C: Build in a separate step with verbose output:"
-        echo "    git clone https://github.com/facebookresearch/pytorch3d.git /tmp/pytorch3d"
-        echo "    cd /tmp/pytorch3d && git checkout v0.7.5"
-        echo "    FORCE_CUDA=1 python setup.py install 2>&1 | tee build.log"
-        echo ""
-        exit 1
-    }
-}
+    echo ">>> Installing PyTorch3D..."
+    echo "  This may compile from source and take 5-15 minutes."
 
-# --- 7) Other dependencies ---
+    export FORCE_CUDA=1
+    if module avail gcc 2>&1 | grep -q "gcc"; then
+        echo "  Loading newer GCC module..."
+        module load gcc 2>/dev/null || true
+    fi
+
+    pip install pytorch3d -f https://dl.fbaipublicfiles.com/pytorch3d/packaging/wheels/py310_cu121_pyt251/download.html || {
+        echo ""
+        echo "  PyTorch3D v0.7.5 source build failed."
+        echo "  Trying v0.7.4..."
+        pip install --no-build-isolation "git+https://github.com/facebookresearch/pytorch3d.git@v0.7.4" || {
+            echo ""
+            echo "  ============================================"
+            echo "  PyTorch3D install failed. Manual fixes:"
+            echo "  ============================================"
+            echo ""
+            echo "  Option A: Try prebuilt wheel for your torch/CUDA combo:"
+            echo "    pip install pytorch3d -f https://dl.fbaipublicfiles.com/pytorch3d/packaging/wheels/py310_cu118_pyt201/download.html"
+            echo ""
+            echo "  Option B: Load newer GCC and retry:"
+            echo "    module load gcc/9.2.0  (check available: module avail gcc)"
+            echo "    pip install --no-build-isolation 'git+https://github.com/facebookresearch/pytorch3d.git@v0.7.5'"
+            echo ""
+            echo "  Option C: Build in a separate step with verbose output:"
+            echo "    git clone https://github.com/facebookresearch/pytorch3d.git /tmp/pytorch3d"
+            echo "    cd /tmp/pytorch3d && git checkout v0.7.5"
+            echo "    FORCE_CUDA=1 python setup.py install 2>&1 | tee build.log"
+            echo ""
+            exit 1
+        }
+    }
+fi
+
+# --- 8) Install remaining dependencies (idempotent — pip skips if satisfied) ---
 echo ""
 echo ">>> Installing remaining dependencies..."
 pip install matplotlib scipy tensorboard imageio tqdm
 
-# --- 8) Final verification ---
+# --- 9) Install gensplines package (editable) ---
+echo ""
+echo ">>> Installing gensplines as editable package..."
+cd "${REPO_ROOT}"
+if [ ! -f "pyproject.toml" ]; then
+    echo "  ERROR: pyproject.toml not found at ${REPO_ROOT}"
+    echo "  Either run this script from inside the repo, or fix the path detection."
+    exit 1
+fi
+pip install -e .
+
+# --- 10) Final verification ---
 echo ""
 echo ">>> Final verification..."
 python -c "
@@ -208,13 +236,17 @@ print(f'PyTorch3D {pytorch3d.__version__}')
 from pytorch3d.renderer import PointsRenderer, PointsRasterizer, AlphaCompositor
 print('PyTorch3D renderer: OK')
 
+import gensplines
+print(f'gensplines {gensplines.__version__}')
+from gensplines import SplineField, evaluate_bspline
+print('gensplines import: OK')
+
 # Quick smoke test: create a small point cloud and render
 from pytorch3d.structures import Pointclouds
 from pytorch3d.renderer import (
     look_at_view_transform, FoVPerspectiveCameras,
     PointsRasterizationSettings,
 )
-import torch
 
 if torch.cuda.is_available():
     device = 'cuda'
@@ -249,5 +281,8 @@ echo ""
 echo "  Next steps:"
 echo "    source scripts/find_conda.sh"
 echo "    conda activate ${ENV_NAME}"
-echo "    python step0_gradient_check.py"
+echo ""
+echo "  Quick test run:"
+echo "    python experiments/run_spline.py --model-name wStraight --quick \\"
+echo "        --num-curves 50 --output-dir outputs/smoke_test"
 echo "=========================================="

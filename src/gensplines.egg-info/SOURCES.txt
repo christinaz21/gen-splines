@@ -1,0 +1,15 @@
+README.md
+pyproject.toml
+src/gensplines/__init__.py
+src/gensplines/coordinates.py
+src/gensplines/hair_loader.py
+src/gensplines/losses.py
+src/gensplines/memory.py
+src/gensplines/metrics.py
+src/gensplines/render_utils.py
+src/gensplines/renderer.py
+src/gensplines/spline.py
+src/gensplines.egg-info/PKG-INFO
+src/gensplines.egg-info/SOURCES.txt
+src/gensplines.egg-info/dependency_links.txt
+src/gensplines.egg-info/top_level.txt
